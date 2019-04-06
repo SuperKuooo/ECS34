@@ -22,9 +22,9 @@ int main(int argc, char *argv[]) {
                 //std::cout << "Enter string> ";
                 //std::getline(std::cin, TitleString);
                 std::vector<std::string> x;
-                x = StringUtils::Split("/Path/To/A/Directory","/");
-                std::cout << x.size();
-                std::cout << x[0];
+                x = StringUtils::Split("A  tougher\ttest\nto   pass!");
+                //std::cout << "A  tougher\ttest\nto   pass!";
+                std::cout << StringUtils::Join(" ", x);
                 /*
                 if(!std::cin.fail()){
                     std::cout<<"|"<<StringUtils::Center(std::string(" ") + StringUtils::Strip(TitleString) + std::string(" "),77,'*')<<"|"<<std::endl;   

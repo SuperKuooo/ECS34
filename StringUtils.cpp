@@ -152,15 +152,15 @@ namespace StringUtils {
         std::string temp;
 
         int div = str.find(splt), div2;
+        x.push_back(Slice(temp, 0, div));
         temp = str;
         while (true) {
-            temp = &temp[div+1];
+            temp = &temp[div + 1];
             div2 = temp.find(splt);
             if (div2 != std::string::npos) {
                 x.push_back(Slice(temp, 0, div2));
-                std::cout << x.size();
                 div = div2;
-            } else{
+            } else {
                 x.push_back(temp);
                 break;
             }
@@ -169,7 +169,16 @@ namespace StringUtils {
     }
 
     std::string Join(const std::string &str, const std::vector<std::string> &vect) {
-        // Your code goes here
+        std::string temp;
+        int counter = 0;
+        for (auto cont : vect) {
+            counter++;
+            if (counter >= vect.size())
+                temp += cont;
+            else
+                temp += cont + str;
+        }
+        return temp;
     }
 
     std::string ExpandTabs(const std::string &str, int tabsize) {
