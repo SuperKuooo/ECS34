@@ -4,30 +4,29 @@
 #include <cctype>
 #include <cstdio>
 
-namespace StringUtils {
+/* 1. Can we make a copy of the string? Or what is better way of doing this.
+ * 2. Difference between char &ch:temp and char ch:temp
+ *
+ *
+ */
 
+namespace StringUtils {
     std::string Slice(const std::string &str, ssize_t start, ssize_t end) {
-        std::string temp;
-        int counter = 0;
-        int length = str.length();
+        if (start == end) {
+            return "";
+        }
         if (start < 0) {
-            start += length;
+            start += str.length();
         }
         if (end <= 0) {
-            end += length;
+            end += str.length();
         }
-        for (char ch : str) {
-            if (counter < start) {
-                counter++;
-                continue;
-            } else if (start <= counter && counter < end) {
-                counter++;
-                temp += ch;
-            } else {
-                break;
-            }
+        ssize_t slice_length = end - start;
+        std::string temp = str;
+        if (slice_length <= 0) {
+            return "";
         }
-        return temp;
+        return temp.substr(start, slice_length);
     }
 
     std::string Capitalize(const std::string &str) {
@@ -149,23 +148,41 @@ namespace StringUtils {
 
     std::vector<std::string> Split(const std::string &str, const std::string &splt) {
         std::vector<std::string> x;
-        std::string temp;
-
-        int div = str.find(splt), div2;
-        x.push_back(Slice(temp, 0, div));
-        temp = str;
-        while (true) {
-            temp = &temp[div + 1];
-            div2 = temp.find(splt);
-            if (div2 != std::string::npos) {
-                x.push_back(Slice(temp, 0, div2));
-                div = div2;
-            } else {
-                x.push_back(temp);
-                break;
+        std::string temp = str;
+        if (splt.empty()) {
+            temp = StringUtils::Replace(temp, "\n", " ");
+            temp = StringUtils::Replace(temp, "\t", " ");
+            temp = StringUtils::Replace(temp, "\r", " ");
+            temp = StringUtils::Replace(temp, "\b", " ");
+            int counter = 0;
+            for (char &ch: temp) {
+                if (ch == ' ' and *(&ch + 1) == ' ') {
+                    int length = 1;
+                    while (*(&ch + length) == ' ') {
+                        length++;
+                    }
+                    temp.erase(counter, length - 1);
+                }
+                counter++;
             }
+            return StringUtils::Split(temp, " ");
+        } else {
+            int div = str.find(splt), div2;
+            x.push_back(Slice(temp, 0, div));
+            while (true) {
+                temp = &temp[div + 1];
+                div2 = temp.find(splt);
+                if (div2 != std::string::npos) {
+                    x.push_back(Slice(temp, 0, div2));
+                    div = div2;
+                } else {
+                    x.push_back(temp);
+                    break;
+                }
+            }
+            return x;
         }
-        return x;
+
     }
 
     std::string Join(const std::string &str, const std::vector<std::string> &vect) {
@@ -182,11 +199,45 @@ namespace StringUtils {
     }
 
     std::string ExpandTabs(const std::string &str, int tabsize) {
-        // Your code goes here
+        std::vector<std::string> expanded = StringUtils::Split(str, "\t");
+        int counter = 0;
+        for (auto &comp : expanded) {
+            counter++;
+            if (counter == expanded.size()) {
+                break;
+            }
+            if (comp.length() >= tabsize) {
+                comp = StringUtils::LJust(comp, tabsize * 2);
+            } else
+                comp = StringUtils::LJust(comp, tabsize);
+        }
+        return StringUtils::Join("", expanded);
     }
 
-    int EditDistance(const std::string &left, const std::string &right, bool ignorecase) {
-        // Your code goes here
+
+    int EditDistance(const std::string &A, const std::string &B, bool ignorecase) {
+        size_t NA = A.size();
+        size_t NB = B.size();
+
+        std::vector<std::vector<size_t>> M(NA + 1, std::vector<size_t>(NB + 1));
+
+        for (size_t a = 0; a <= NA; ++a)
+            M[a][0] = a;
+
+        for (size_t b = 0; b <= NB; ++b)
+            M[0][b] = b;
+
+        for (size_t a = 1; a <= NA; ++a)
+            for (size_t b = 1; b <= NB; ++b) {
+                size_t x = M[a - 1][b] + 1;
+                size_t y = M[a][b - 1] + 1;
+                size_t z = M[a - 1][b - 1] + (A[a - 1] == B[b - 1] ? 0 : 2);
+                if (x < y)
+                    M[a][b] = x < z ? x : z;
+                else
+                    M[a][b] = y < z ? y : z;
+            }
+        return M[A.size()][B.size()];
     }
 
 }
