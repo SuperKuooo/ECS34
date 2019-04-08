@@ -139,7 +139,7 @@ namespace StringUtils {
         int replace = str.find(old);
         temp = str;
         while (replace != std::string::npos) {
-            temp.replace(replace, rep.length(), rep);
+            temp.replace(replace, old.length(), rep);
             replace = temp.find(old);
             // Inspired by https://stackoverflow.com/questions/15740829/string-find-doesnt-return-1b
         }
