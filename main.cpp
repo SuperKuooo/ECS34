@@ -42,13 +42,16 @@ int main(int argc, char *argv[]) {
                     }
                 }
             } else if (CommandString == "3") {
-                std::string Path;
+                CPath AbsPath("/usr/bin");
+                std::cout << std::string(AbsPath.AbsolutePath());
+                std::cout << std::string(CPath::AbsolutePath(AbsPath));
+                /*std::string Path;
                 std::cout << "Enter a path> ";
                 std::getline(std::cin, Path);
                 if (!std::cin.fail()) {
                     std::cout << "The absolute path of \"" << Path << "\" is \""
                               << std::string(CPath::AbsolutePath(CPath(Path))) << "\"" << std::endl;
-                }
+                }*/
             } else if (CommandString == "4") {
                 std::string Path;
                 std::cout << "Enter a path> ";
