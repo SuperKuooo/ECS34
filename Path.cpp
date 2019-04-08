@@ -25,8 +25,10 @@ CPath::CPath(const CPath &path) : DImplementation(std::make_unique<SImplementati
 
 CPath::CPath(const std::string &path) : DImplementation(std::make_unique<SImplementation>()) {
     DImplementation->input_path = path;
-    if (isalpha(path[0]) or path[0] == '.') {
-        DImplementation->conj_path = GetCWD() + path;
+    if (path[0] == '.') {
+        DImplementation->conj_path = GetCWD() + '/' + path;
+    } else if (isalpha(path[0])) {
+        DImplementation->conj_path = GetCWD() + "./" + path;
     } else {
         DImplementation->conj_path = path;
     }
@@ -108,7 +110,7 @@ bool CPath::IsAbsolute() const {
 }
 
 std::string CPath::ToString() const {
-    // Your code goes here
+    return std::string(*this);
 }
 
 
@@ -123,38 +125,56 @@ CPath CPath::AbsolutePath() const {
 }
 
 CPath CPath::CommonPath(const CPath &path) const {
-    // Your code goes here
+    std::vector<std::string> dir1, dir2, cmn_path;
+    dir1 = StringUtils::Split(this->NormalizePath(), "/");
+    dir2 = StringUtils::Split(path.NormalizePath(), "/");
+    for (int counter = 0; counter < dir1.size(); counter++) {
+        if (dir1[counter] != dir2[counter]) {
+            break;
+        }
+        cmn_path.push_back(dir1[counter]);
+    }
+    return CPath(StringUtils::Join("/", cmn_path));
 }
 
 //Done
 CPath CPath::NormalizePath() const {
-    std::string temp = DImplementation->conj_path;
     std::string normalized;
     std::vector<std::string> dir;
-
-    dir = StringUtils::Split(temp, "/");
+    dir = StringUtils::Split(DImplementation->conj_path, "/");
     bool loop = true;
     while (loop) {
         for (int i = 0; i < dir.size(); i++) {
             if (dir[i].find("..") != std::string::npos) {
-                dir.erase(dir.begin() + i);
+                dir.erase(dir.begin() + i - 1);
+                dir.erase(dir.begin() + i - 1);
                 loop = true;
                 break;
             }
             loop = false;
         }
     }
-
-
-    normalized = StringUtils::Replace(StringUtils::Join("/", dir), "./", "/");
+    normalized = StringUtils::Join("/", dir);
+    normalized = StringUtils::Replace(normalized, "./", "/");
     normalized = StringUtils::Replace(normalized, "//", "/");
-    //normalized = StringUtils::Replace(normalized, "~", std::string(CPath::HomePath()));
+    normalized = StringUtils::Replace(normalized, "~", std::string(CPath::HomePath()) + "/");
 
     return CPath(normalized);
 }
 
 CPath CPath::RelativePathTo(const CPath &path) const {
-    // Your code goes here
+    std::string dir1, dir2, common, dist, ret;
+    dir1 = std::string(this->NormalizePath());
+    dir2 = std::string(path.NormalizePath());
+    common = std::string(CPath::CommonPath(CPath(dir1), CPath(dir2)));
+    dist = StringUtils::Slice(dir1, common.length());
+    for (char ch: dist) {
+        if (ch == '/') {
+            ret += "../";
+        }
+    }
+    ret += StringUtils::Slice(dir2, common.length() + 1);
+    return CPath(ret);
 }
 
 // Helper function provided to get the current working directory
@@ -184,24 +204,7 @@ CPath CPath::CurrentPath() {
 }
 
 CPath CPath::CommonPath(const CPath &path1, const CPath &path2) {
-    std::vector<std::string> dir1, dir2;
-    //std::cout << std::string(path1.NormalizePath());
-
-    /*
-    dir1 = StringUtils::Split(std::string(path1.NormalizePath()), "/");
-    dir2 = StringUtils::Split(std::string(path2.NormalizePath()), "/");
-    for (int counter = 0; counter < dir1.size(); counter++) {
-        std::cout << dir1[counter];
-        std::cout << dir2[counter];
-        if (dir1[counter] != dir2[counter]) {
-            while (dir1.size() != counter) {
-                dir1.pop_back();
-            }
-            break;
-        }
-    }
-    CPath val(StringUtils::Join("/", dir1));
-    return val;*/
+    return path1.CommonPath(path2);
 }
 
 
@@ -218,15 +221,11 @@ CPath CPath::HomePath() {
     return val;
 }
 
-
 //Done
 CPath CPath::NormalizePath(const CPath &path) {
     return path.NormalizePath();
 }
 
 CPath CPath::RelativePath(const CPath &path, const CPath &startpath) {
-    std::vector<std::string> dir1, dir2;
-    //std::cout << std::string(path1.NormalizePath());
-
-
+    return path.RelativePath(startpath);
 }
