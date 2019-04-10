@@ -135,9 +135,8 @@ namespace StringUtils {
     }
 
     std::string Replace(const std::string &str, const std::string &old, const std::string &rep) {
-        std::string temp;
-        int replace = str.find(old);
-        temp = str;
+        std::string temp = str;
+        size_t replace = str.find(old);
         while (replace != std::string::npos) {
             temp.replace(replace, old.length(), rep);
             replace = temp.find(old);
@@ -167,7 +166,7 @@ namespace StringUtils {
             }
             return StringUtils::Split(temp, " ");
         } else {
-            int div = str.find(splt), div2;
+            size_t div = str.find(splt), div2;
             x.push_back(Slice(temp, 0, div));
             while (true) {
                 temp = &temp[div + 1];
@@ -187,7 +186,7 @@ namespace StringUtils {
 
     std::string Join(const std::string &str, const std::vector<std::string> &vect) {
         std::string temp;
-        int counter = 0;
+        size_t counter = 0;
         for (auto cont : vect) {
             counter++;
             if (counter >= vect.size())
@@ -200,13 +199,13 @@ namespace StringUtils {
 
     std::string ExpandTabs(const std::string &str, int tabsize) {
         std::vector<std::string> expanded = StringUtils::Split(str, "\t");
-        int counter = 0;
+        size_t counter = 0;
         for (auto &comp : expanded) {
             counter++;
             if (counter == expanded.size()) {
                 break;
             }
-            if (comp.length() >= tabsize) {
+            if (int(comp.length()) >= tabsize) {
                 comp = StringUtils::LJust(comp, tabsize * 2);
             } else
                 comp = StringUtils::LJust(comp, tabsize);
@@ -215,29 +214,33 @@ namespace StringUtils {
     }
 
 
-    int EditDistance(const std::string &A, const std::string &B, bool ignorecase) {
-        size_t NA = A.size();
-        size_t NB = B.size();
+    int EditDistance(const std::string &left, const std::string &right, bool ignorecase) {
+        std::string _left, _right;
 
-        std::vector<std::vector<size_t>> M(NA + 1, std::vector<size_t>(NB + 1));
-
-        for (size_t a = 0; a <= NA; ++a)
-            M[a][0] = a;
-
-        for (size_t b = 0; b <= NB; ++b)
-            M[0][b] = b;
-
-        for (size_t a = 1; a <= NA; ++a)
-            for (size_t b = 1; b <= NB; ++b) {
-                size_t x = M[a - 1][b] + 1;
-                size_t y = M[a][b - 1] + 1;
-                size_t z = M[a - 1][b - 1] + (A[a - 1] == B[b - 1] ? 0 : 2);
-                if (x < y)
-                    M[a][b] = x < z ? x : z;
-                else
-                    M[a][b] = y < z ? y : z;
+        if (ignorecase) {
+            for (char ch: left) {
+                _left += ::toupper(ch);
             }
-        return M[A.size()][B.size()];
-    }
+            for (char ch: right) {
+                _right += ::toupper(ch);
+            }
+        } else {
+            _left = left;
+            _right = right;
+        }
 
+        const std::size_t len1 = _left.size(), len2 = _right.size();
+        std::vector<std::vector<unsigned int>> d(len1 + 1, std::vector<unsigned int>(len2 + 1));
+        d[0][0] = 0;
+        for (unsigned int i = 1; i <= len1; ++i) d[i][0] = i;
+        for (unsigned int i = 1; i <= len2; ++i) d[0][i] = i;
+
+        for (unsigned int i = 1; i <= len1; ++i)
+            for (unsigned int j = 1; j <= len2; ++j)
+                d[i][j] = std::min(
+                        {d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (_left[i - 1] == _right[j - 1] ? 0 : 1)});
+        return d[len1][len2];
+
+
+    }
 }
