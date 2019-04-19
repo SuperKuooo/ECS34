@@ -79,11 +79,10 @@ namespace StringUtils {
     }
 
     std::string RStrip(const std::string &str) {
-        std::string temp;
+        std::string temp = str;
         int length = str.length() - 1;
-        temp = str;
         for (int counter = length; counter >= 0; counter--) {
-            if (isblank(temp[counter])) {
+            if (isblank(temp[counter]) or temp[counter] == '\n') {
                 temp.erase(counter, 1);
             } else {
                 break;
@@ -135,9 +134,8 @@ namespace StringUtils {
     }
 
     std::string Replace(const std::string &str, const std::string &old, const std::string &rep) {
-        std::string temp;
-        int replace = str.find(old);
-        temp = str;
+        std::string temp = str;
+        size_t replace = str.find(old);
         while (replace != std::string::npos) {
             temp.replace(replace, old.length(), rep);
             replace = temp.find(old);
@@ -167,7 +165,7 @@ namespace StringUtils {
             }
             return StringUtils::Split(temp, " ");
         } else {
-            int div = str.find(splt), div2;
+            size_t div = str.find(splt), div2;
             x.push_back(Slice(temp, 0, div));
             while (true) {
                 temp = &temp[div + 1];
@@ -187,7 +185,7 @@ namespace StringUtils {
 
     std::string Join(const std::string &str, const std::vector<std::string> &vect) {
         std::string temp;
-        int counter = 0;
+        size_t counter = 0;
         for (auto cont : vect) {
             counter++;
             if (counter >= vect.size())
@@ -200,13 +198,13 @@ namespace StringUtils {
 
     std::string ExpandTabs(const std::string &str, int tabsize) {
         std::vector<std::string> expanded = StringUtils::Split(str, "\t");
-        int counter = 0;
+        size_t counter = 0;
         for (auto &comp : expanded) {
             counter++;
             if (counter == expanded.size()) {
                 break;
             }
-            if (comp.length() >= tabsize) {
+            if (int(comp.length()) >= tabsize) {
                 comp = StringUtils::LJust(comp, tabsize * 2);
             } else
                 comp = StringUtils::LJust(comp, tabsize);
@@ -215,29 +213,41 @@ namespace StringUtils {
     }
 
 
-    int EditDistance(const std::string &A, const std::string &B, bool ignorecase) {
-        size_t NA = A.size();
-        size_t NB = B.size();
+    int EditDistance(const std::string &left, const std::string &right, bool ignorecase) {
+        const std::size_t len1 = left.size(), len2 = right.size();
+        std::vector<std::vector<unsigned int>> matrix(len1 + 1, std::vector<unsigned int>(len2 + 1));
+        std::string _left, _right;
 
-        std::vector<std::vector<size_t>> M(NA + 1, std::vector<size_t>(NB + 1));
-
-        for (size_t a = 0; a <= NA; ++a)
-            M[a][0] = a;
-
-        for (size_t b = 0; b <= NB; ++b)
-            M[0][b] = b;
-
-        for (size_t a = 1; a <= NA; ++a)
-            for (size_t b = 1; b <= NB; ++b) {
-                size_t x = M[a - 1][b] + 1;
-                size_t y = M[a][b - 1] + 1;
-                size_t z = M[a - 1][b - 1] + (A[a - 1] == B[b - 1] ? 0 : 2);
-                if (x < y)
-                    M[a][b] = x < z ? x : z;
-                else
-                    M[a][b] = y < z ? y : z;
+        if (ignorecase) {
+            for (char ch: left) {
+                _left += ::toupper(ch);
             }
-        return M[A.size()][B.size()];
+            for (char ch: right) {
+                _right += ::toupper(ch);
+            }
+        } else {
+            _left = left;
+            _right = right;
+        }
+
+        matrix[0][0] = 0;
+        for (size_t i = 1; i <= len1; ++i) {
+            matrix[i][0] = i;
+        }
+        for (size_t i = 1; i <= len2; ++i) {
+            matrix[0][i] = i;
+        }
+
+        for (size_t i = 1; i <= len1; ++i) {
+            for (size_t j = 1; j <= len2; ++j) {
+                matrix[i][j] = std::min({matrix[i - 1][j] + 1, matrix[i][j - 1] + 1,
+                         matrix[i - 1][j - 1] + (_left[i - 1] == _right[j - 1] ? 0 : 1)});
+
+            }
+        }
+
+        return matrix[len1][len2];
     }
+
 
 }

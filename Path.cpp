@@ -32,6 +32,10 @@ CPath::CPath(const std::string &path) : DImplementation(std::make_unique<SImplem
     } else {
         DImplementation->conj_path = path;
     }
+    if (path[path.length() - 1] == '/') {
+        DImplementation->input_path.erase(path.length() - 1, 1);
+        DImplementation->conj_path.erase(path.length() - 1, 1);
+    }
 }
 
 CPath::~CPath() {
@@ -83,15 +87,17 @@ bool CPath::operator!=(const CPath &path) const {
 //Done
 CPath CPath::Directory() const {
     std::vector<std::string> path = StringUtils::Split(DImplementation->input_path, "/");
-    path.pop_back();
-    return CPath(StringUtils::Join("/", path));
 
+    if (!path[1].empty()){
+        path.pop_back();
+    }
+    return CPath(StringUtils::Join("/", path));
 }
 
 //Done
 std::string CPath::BaseName() const {
     std::vector<std::string> path = StringUtils::Split(DImplementation->input_path, "/");
-    return CPath(path.back());
+    return path.back();
 }
 
 //Done
@@ -128,7 +134,7 @@ CPath CPath::CommonPath(const CPath &path) const {
     std::vector<std::string> dir1, dir2, cmn_path;
     dir1 = StringUtils::Split(this->NormalizePath(), "/");
     dir2 = StringUtils::Split(path.NormalizePath(), "/");
-    for (int counter = 0; counter < dir1.size(); counter++) {
+    for (int counter = 0; counter < int(dir1.size()); counter++) {
         if (dir1[counter] != dir2[counter]) {
             break;
         }
@@ -144,7 +150,7 @@ CPath CPath::NormalizePath() const {
     dir = StringUtils::Split(DImplementation->conj_path, "/");
     bool loop = true;
     while (loop) {
-        for (int i = 0; i < dir.size(); i++) {
+        for (int i = 0; i < int(dir.size()); i++) {
             if (dir[i].find("..") != std::string::npos) {
                 dir.erase(dir.begin() + i - 1);
                 dir.erase(dir.begin() + i - 1);
@@ -163,17 +169,29 @@ CPath CPath::NormalizePath() const {
 }
 
 CPath CPath::RelativePathTo(const CPath &path) const {
-    std::string dir1, dir2, common, dist, ret;
-    dir1 = std::string(this->NormalizePath());
-    dir2 = std::string(path.NormalizePath());
+    std::string dir1, dir2, common, dist1, dist2, ret;
+    dir1 = std::string(path.NormalizePath());
+    dir2 = std::string(this->NormalizePath());
     common = std::string(CPath::CommonPath(CPath(dir1), CPath(dir2)));
-    dist = StringUtils::Slice(dir1, common.length());
-    for (char ch: dist) {
-        if (ch == '/') {
-            ret += "../";
+    dist1 = StringUtils::Slice(dir1, common.length());
+    dist2 = StringUtils::Slice(dir2, common.length());
+    if (common == "" and (dist1 == "" or dist2 == "")) {
+        for (char ch: dir1) {
+            if (ch == '/') {
+                ret += "../";
+            }
         }
+        ret += StringUtils::Slice(dir2, 1);
+    } else if (common != "" and dist1 == "") {
+        ret = "." + dist2;
+    } else {
+        for (char ch: dist1) {
+            if (ch == '/') {
+                ret += "../";
+            }
+        }
+        ret += StringUtils::Slice(dist1, 1);
     }
-    ret += StringUtils::Slice(dir2, common.length() + 1);
     return CPath(ret);
 }
 
@@ -227,5 +245,5 @@ CPath CPath::NormalizePath(const CPath &path) {
 }
 
 CPath CPath::RelativePath(const CPath &path, const CPath &startpath) {
-    return path.RelativePath(startpath);
+    return path.RelativePathTo(startpath);
 }
