@@ -6,19 +6,21 @@
 int main(int argc, char *argv[]) {
 
     CFileSystemTree Tree;
-    //CFileSystemTree::CEntryIterator i;
-    //++i;
 
-
-    Tree.Root().AddChild("Hello");
+    /*Tree.Root().AddChild("Hello");
     Tree.Root().AddChild("etc");
-    Tree.Root().AddChild("home");
-    Tree.Root().AddChild("dev");
-    Tree.Root().AddChild("usr");
-    Tree.Root().AddChild("var");
+    Tree.Root().AddChild("mai");
+    Tree.Root().AddChild("maih");*/
 
 
-    std::cout <<"Success";
+    std::cout<<Tree.Root().AddChild("home");
+    //std::cout<<Tree.Root().AddChild("dev")<<std::endl;
+    //std::cout<<Tree.Root().AddChild("usr")<<std::endl;
+    //std::cout<<Tree.Root().AddChild("var")<<std::endl;
+    std::cout<<Tree.Root().AddChild("home");
+
+
+    //std::cout << "Success";
     return 0;
 }
 
