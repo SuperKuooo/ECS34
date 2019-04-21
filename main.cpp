@@ -4,17 +4,21 @@
 #include "StringUtils.h"
 
 int main(int argc, char *argv[]) {
-    /*
-    CFileSystemTree::CEntry Tree;
-    Tree.AddChild("home");
-    //Tree.
-    //std::cout << std::string(Tree);
-    std::cout <<std::string(Tree);
-*/
 
-    std::shared_ptr<int> foo;
-    int* x = 5;
-    foo = x;
-    return EXIT_SUCCESS;
+    CFileSystemTree Tree;
+    //CFileSystemTree::CEntryIterator i;
+    //++i;
+
+
+    Tree.Root().AddChild("Hello");
+    Tree.Root().AddChild("etc");
+    Tree.Root().AddChild("home");
+    Tree.Root().AddChild("dev");
+    Tree.Root().AddChild("usr");
+    Tree.Root().AddChild("var");
+
+
+    std::cout <<"Success";
+    return 0;
 }
 

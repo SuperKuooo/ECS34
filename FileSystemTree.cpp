@@ -9,11 +9,11 @@ struct CFileSystemTree::SImplementation {
 
 struct CFileSystemTree::CEntry::SImplementation {
     std::string current_node;
-    std::shared_ptr<CFileSystemTree::CEntry> child_node;
+    std::vector<CFileSystemTree::CEntry *> child_node;
 };
 
 struct CFileSystemTree::CEntryIterator::SImplementation {
-    // You implementation here
+    CFileSystemTree::CEntry *location_ref;
 };
 
 struct CFileSystemTree::CConstEntryIterator::SImplementation {
@@ -25,7 +25,7 @@ CFileSystemTree::CEntry::CEntry() : DImplementation(std::make_unique<SImplementa
 }
 
 CFileSystemTree::CEntry::CEntry(const CEntry &entry) : DImplementation(std::make_unique<SImplementation>()) {
-    DImplementation->child_node = std::make_shared<CFileSystemTree::CEntry>(entry);
+    //DImplementation->child_node = std::make_shared<CFileSystemTree::CEntry>(entry);
 
 }
 
@@ -34,7 +34,8 @@ CFileSystemTree::CEntry::~CEntry() {
 }
 
 CFileSystemTree::CEntry &CFileSystemTree::CEntry::operator=(const CEntry &entry) {
-    // You code here
+    this->DImplementation->current_node = entry.DImplementation->current_node;
+    this->DImplementation->child_node = entry.DImplementation->child_node;
 }
 
 bool CFileSystemTree::CEntry::Valid() const {
@@ -54,9 +55,9 @@ std::string CFileSystemTree::CEntry::ToString() const {
 }
 
 CFileSystemTree::CEntry::operator std::string() const {
-    std::string temp = DImplementation->current_node;
-    temp += DImplementation->child_node->DImplementation->current_node;
-    return temp;
+    //std::string temp = DImplementation->current_node;
+    //temp += DImplementation->child_node->DImplementation->current_node;
+    //return temp;
 }
 
 bool CFileSystemTree::CEntry::Rename(const std::string &name) {
@@ -72,9 +73,10 @@ bool CFileSystemTree::CEntry::SetChild(const std::string &name, CEntryIterator &
 }
 
 bool CFileSystemTree::CEntry::AddChild(const std::string &path, bool addall) {
-    CEntry new_node;
-    DImplementation->child_node = std::make_shared<CFileSystemTree::CEntry>(new_node);;
-    DImplementation->current_node = path;
+    CEntry *new_node = new CEntry();
+    new_node->DImplementation->current_node = path;
+    DImplementation->child_node.push_back(new_node);
+    //std::cout<<this->DImplementation->child_node.size();
     return true;
 }
 
@@ -136,7 +138,8 @@ CFileSystemTree::CEntryIterator::CEntryIterator() : DImplementation(std::make_un
 
 CFileSystemTree::CEntryIterator::CEntryIterator(const CEntryIterator &iter) : DImplementation(
         std::make_unique<SImplementation>()) {
-    // You code here
+
+
 }
 
 CFileSystemTree::CEntryIterator::~CEntryIterator() {
@@ -144,7 +147,7 @@ CFileSystemTree::CEntryIterator::~CEntryIterator() {
 }
 
 CFileSystemTree::CEntryIterator &CFileSystemTree::CEntryIterator::operator=(const CEntryIterator &iter) {
-    // You code here
+    std::cout << "sasfd";
 }
 
 bool CFileSystemTree::CEntryIterator::operator==(const CEntryIterator &iter) const {
@@ -156,7 +159,8 @@ bool CFileSystemTree::CEntryIterator::operator!=(const CEntryIterator &iter) con
 }
 
 CFileSystemTree::CEntryIterator &CFileSystemTree::CEntryIterator::operator++() {
-    // You code here
+    DImplementation->location_ref = DImplementation->location_ref->DImplementation->child_node[0];
+    return *this;
 }
 
 CFileSystemTree::CEntryIterator CFileSystemTree::CEntryIterator::operator++(int) {
@@ -234,7 +238,7 @@ const CFileSystemTree::CEntry *CFileSystemTree::CConstEntryIterator::operator->(
 }
 
 CFileSystemTree::CFileSystemTree() : DImplementation(std::make_unique<SImplementation>()) {
-    DImplementation->root_node.DImplementation->child_node = nullptr;
+    //DImplementation->root_node.DImplementation->child_node = nullptr;
     DImplementation->root_node.DImplementation->current_node = "/";
 }
 
@@ -264,8 +268,11 @@ std::string CFileSystemTree::ToString() const {
 
 CFileSystemTree::operator std::string() const {
     std::string temp;
-    temp = DImplementation->root_node;
-    temp += DImplementation->root_node.DImplementation->current_node;
+    temp = DImplementation->root_node.DImplementation->current_node;
+    //int var;
+    //var = DImplementation->root_node.DImplementation->child_node.size();
+    //std::cout << var;
+    temp += DImplementation->root_node.DImplementation->child_node[0]->DImplementation->current_node;
     return temp;
 }
 
