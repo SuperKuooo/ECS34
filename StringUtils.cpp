@@ -147,6 +147,10 @@ namespace StringUtils {
     std::vector<std::string> Split(const std::string &str, const std::string &splt) {
         std::vector<std::string> x;
         std::string temp = str;
+        if (str.find("/") == std::string::npos) {
+            x.push_back(str);
+            return x;
+        }
         if (splt.empty()) {
             temp = StringUtils::Replace(temp, "\n", " ");
             temp = StringUtils::Replace(temp, "\t", " ");
@@ -241,7 +245,7 @@ namespace StringUtils {
         for (int i = 1; i <= len1; ++i) {
             for (int j = 1; j <= len2; ++j) {
                 matrix[i][j] = std::min({matrix[i - 1][j] + 1, matrix[i][j - 1] + 1,
-                         matrix[i - 1][j - 1] + (_left[i - 1] == _right[j - 1] ? 0 : 1)});
+                                         matrix[i - 1][j - 1] + (_left[i - 1] == _right[j - 1] ? 0 : 1)});
 
             }
         }

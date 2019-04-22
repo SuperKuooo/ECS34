@@ -7,9 +7,11 @@ struct CFileSystemTree::SImplementation {
     CFileSystemTree::CEntry root_node;
 };
 
-struct CFileSystemTree::CEntry::SImplementation {
+struct CFileSystemTree::CEntry::SImplementation { //This motherfuker is a doubly linked list
+    CFileSystemTree::CEntry *parent_node;
     std::string current_node;
     std::vector<CFileSystemTree::CEntry *> child_node;
+    int node_level = 0;
 };
 
 struct CFileSystemTree::CEntryIterator::SImplementation {
@@ -27,8 +29,8 @@ CFileSystemTree::CEntry::CEntry() : DImplementation(std::make_unique<SImplementa
 }
 
 CFileSystemTree::CEntry::CEntry(const CEntry &entry) : DImplementation(std::make_unique<SImplementation>()) {
-    //DImplementation->child_node = std::make_shared<CFileSystemTree::CEntry>(entry);
-
+    DImplementation->child_node = entry.DImplementation->child_node;
+    DImplementation->current_node = entry.DImplementation->current_node;
 }
 
 CFileSystemTree::CEntry::~CEntry() {
@@ -45,7 +47,8 @@ bool CFileSystemTree::CEntry::Valid() const {
 }
 
 std::string CFileSystemTree::CEntry::Name() const {
-    // You code here
+    // You code her    int counter = 0;
+
 }
 
 std::string CFileSystemTree::CEntry::FullPath() const {
@@ -56,15 +59,34 @@ std::string CFileSystemTree::CEntry::ToString() const {
     // You code here
 }
 
-CFileSystemTree::CEntry::operator std::string() const {
+CFileSystemTree::CEntry::operator std::string() const { //This code is garbo LOL. It is actually very very bad.
+    //But honestly, nobody have time to fix it. It works. That's all it matters.
     std::string temp;
-    temp += DImplementation->current_node;
-    temp += "\n";
-    for (auto str: DImplementation->child_node) {
-        temp += str->DImplementation->current_node;
-        temp += "/";
+
+    for (int i = 1; i < this->DImplementation->node_level; i++) {
+        if (this->DImplementation->parent_node !=
+            (this->DImplementation->parent_node->DImplementation->parent_node->DImplementation->child_node
+            [this->DImplementation->parent_node->DImplementation->parent_node->DImplementation->child_node.size() - 1]))
+            temp += "|  ";
+        else
+            temp += "   ";
     }
-    temp += "\n";
+
+    if (this->DImplementation->current_node == "/")
+        temp += this->DImplementation->current_node + "\n";
+    else if (this != this->DImplementation->parent_node->DImplementation
+            ->child_node[this->DImplementation->parent_node->DImplementation->child_node.size() - 1])
+        temp += "|--" + this->DImplementation->current_node + "\n";
+    else
+        temp += "`--" + this->DImplementation->current_node + "\n";
+
+
+    if (!this->DImplementation->child_node.empty()) {
+        for (CEntry *dir :this->DImplementation->child_node) {
+            temp += std::string(*dir);
+        }
+        return temp;
+    }
     return temp;
 }
 
@@ -81,14 +103,52 @@ bool CFileSystemTree::CEntry::SetChild(const std::string &name, CEntryIterator &
 }
 
 bool CFileSystemTree::CEntry::AddChild(const std::string &path, bool addall) {
+    std::vector<std::string> dir_vect = StringUtils::Split(path, "/");
     CEntry *new_node = new CEntry();
-    CEntryIterator comp(this->Find(path));
-    CFileSystemTree temp;
+    CEntryIterator compare(this->Find(dir_vect[0]));
+    CFileSystemTree temp_tree;
 
-    if (comp == temp.NotFound()) {
-        new_node->DImplementation->current_node = path;
-        DImplementation->child_node.push_back(new_node);
+    if (!path.empty()) {
+        if (path[0] == '/') {
+            if (this->DImplementation->parent_node == nullptr) {
+                return this->AddChild(StringUtils::Slice(path, 1), true);
+            } else
+                return false;
+        }
+    }
+
+    if (addall) {
+        if (!dir_vect.empty()) {
+            if (this->Find(dir_vect[0]) != temp_tree.NotFound()) {
+                new_node = compare.DImplementation->location_ref;
+                dir_vect.erase(dir_vect.begin());
+                if (dir_vect.size() == 1)
+                    return new_node->AddChild(dir_vect[0]);
+                else
+                    return new_node->AddChild(StringUtils::Join("/", dir_vect), true);
+            }
+            new_node->DImplementation->node_level = this->DImplementation->node_level + 1;
+            new_node->DImplementation->parent_node = this;
+            new_node->DImplementation->current_node = dir_vect[0];
+            DImplementation->child_node.push_back(new_node);
+            dir_vect.erase(dir_vect.begin());
+            if (dir_vect.size() > 1) {
+                return new_node->AddChild(StringUtils::Join("/", dir_vect), true);
+            } else if (dir_vect.empty()) {
+                return true;
+            } else {
+                return new_node->AddChild(dir_vect[0]);
+            }
+        }
         return true;
+    } else {
+        if (compare == temp_tree.NotFound()) {
+            new_node->DImplementation->node_level = this->DImplementation->node_level + 1;
+            new_node->DImplementation->parent_node = this;
+            new_node->DImplementation->current_node = path;
+            DImplementation->child_node.push_back(new_node);
+            return true;
+        }
     }
 
     return false;
@@ -107,11 +167,11 @@ bool CFileSystemTree::CEntry::GetData(std::vector<char> &data) const {
 }
 
 CFileSystemTree::CEntry &CFileSystemTree::CEntry::Parent() {
-    // You code here
+    return *this->DImplementation->parent_node;
 }
 
 const CFileSystemTree::CEntry &CFileSystemTree::CEntry::Parent() const {
-    // You code here
+    return *this->DImplementation->parent_node;
 }
 
 CFileSystemTree::CEntryIterator CFileSystemTree::CEntry::Find(const std::string &name) {
@@ -120,7 +180,6 @@ CFileSystemTree::CEntryIterator CFileSystemTree::CEntry::Find(const std::string 
 
     for (i = this->begin(); i != this->end(); i++) {
         if (i.DImplementation->location_ref->DImplementation->current_node == name) {
-            //std::cout << i.DImplementation->nodes_list.size();
             return i;
         }
     }
@@ -301,6 +360,7 @@ const CFileSystemTree::CEntry *CFileSystemTree::CConstEntryIterator::operator->(
 
 CFileSystemTree::CFileSystemTree() : DImplementation(std::make_unique<SImplementation>()) {
     DImplementation->root_node.DImplementation->current_node = "/";
+    DImplementation->root_node.DImplementation->parent_node = nullptr;
 }
 
 CFileSystemTree::CFileSystemTree(const CFileSystemTree &tree) : DImplementation(std::make_unique<SImplementation>()) {
@@ -328,13 +388,7 @@ std::string CFileSystemTree::ToString() const {
 }
 
 CFileSystemTree::operator std::string() const {
-    std::string temp;
-    temp = DImplementation->root_node.DImplementation->current_node;
-    //int var;
-    //var = DImplementation->root_node.DImplementation->child_node.size();
-    //std::cout << var;
-    temp += DImplementation->root_node.DImplementation->child_node[0]->DImplementation->current_node;
-    return temp;
+    return std::string(this->DImplementation->root_node);
 }
 
 CFileSystemTree::CEntryIterator CFileSystemTree::Find(const std::string &path) {

@@ -13,14 +13,23 @@ int main(int argc, char *argv[]) {
     Tree.Root().AddChild("maih");*/
 
 
-    std::cout<<Tree.Root().AddChild("home");
-    //std::cout<<Tree.Root().AddChild("dev")<<std::endl;
-    //std::cout<<Tree.Root().AddChild("usr")<<std::endl;
-    //std::cout<<Tree.Root().AddChild("var")<<std::endl;
-    std::cout<<Tree.Root().AddChild("home");
+    //std::cout << Tree.Root().AddChild("home", true) << std::endl;
+    //std::cout << Tree.Root().AddChild("home", true) << std::endl;
+    //std::cout << Tree.Root().AddChild("dev") << std::endl;
+    //std::cout << Tree.Root().AddChild("dev") << std::endl;
+    //std::cout << Tree.Root().AddChild("usr") << std::endl;
+    //std::cout << Tree.Root().AddChild("var") << std::endl;
+    //std::cout << Tree.Root().AddChild("home") << std::endl;
+    //std::cout << Tree.Root().AddChild("/temp/cjnitta/ecs34", true) << std::endl;
+    std::cout << Tree.Root().AddChild("temp/cjnitta/ecs34/proj1", true) << std::endl;
+    std::cout << Tree.Root().AddChild("temp/cjnitta/ecs34/proj2", true) << std::endl;
+    std::cout << Tree.Root().AddChild("temp/cjnitta/ecs160", true) << std::endl;
+    //std::cout << Tree.Root().AddChild("eev") << std::endl;
 
+    std::cout << std::string(Tree.Root());
 
-    //std::cout << "Success";
+    //std::cout << StringUtils::Split("temp", "/")[0];
+
     return 0;
 }
 
