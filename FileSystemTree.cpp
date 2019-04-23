@@ -54,7 +54,7 @@ bool CFileSystemTree::CEntry::Valid() const {
 }
 
 std::string CFileSystemTree::CEntry::Name() const {
-
+    return this->DImplementation->current_node;
 }
 
 std::string CFileSystemTree::CEntry::FullPath() const {
@@ -272,7 +272,7 @@ CFileSystemTree::CEntry &CFileSystemTree::CEntryIterator::operator*() const {
 }
 
 CFileSystemTree::CEntry *CFileSystemTree::CEntryIterator::operator->() const {
-    // You code here
+    return DImplementation->iter->first;
 }
 
 CFileSystemTree::CConstEntryIterator::CConstEntryIterator() : DImplementation(std::make_unique<SImplementation>()) {
