@@ -13,14 +13,12 @@ int main(int argc, char *argv[]) {
     Tree.Root().AddChild("maih");*/
 
 
-    //std::cout << Tree.Root().AddChild("home", true) << std::endl;
-    //std::cout << Tree.Root().AddChild("home", true) << std::endl;
-    //std::cout << Tree.Root().AddChild("dev") << std::endl;
+    //std::cout << Tree.Root().AddChild("home") << std::endl;
+    std::cout << Tree.Root().AddChild("home") << std::endl;
+    std::cout << Tree.Root().AddChild("dev") << std::endl;
+
     //std::cout << Tree.Root().AddChild("dev") << std::endl;
     //std::cout << Tree.Root().AddChild("usr") << std::endl;
-    std::cout << Tree.Root().AddChild("c") << std::endl;
-    std::cout << Tree.Root().AddChild("b") << std::endl;
-    std::cout << Tree.Root().AddChild("a") << std::endl;
     //std::cout << Tree.Root().AddChild("/temp/cjnitta/ecs34", true) << std::endl;
     //std::cout << Tree.Root().AddChild("/home/proj2") << std::endl;
     //std::cout << Tree.Root().AddChild("/home/proj1/src", true) << std::endl;

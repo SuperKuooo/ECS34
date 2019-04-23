@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include "FileSystemTree.h"
 
-/*TEST(FileSystemTree, EmptyTreeTest){
+TEST(FileSystemTree, EmptyTreeTest){
     CFileSystemTree Tree;
 
     EXPECT_EQ(std::string(Tree), "/");
@@ -9,7 +9,7 @@
     EXPECT_TRUE(Tree.Root().Valid());
     EXPECT_FALSE(Tree.Root().Parent().Valid());
 }
-*/
+
 
 TEST(FileSystemTree, AddChildTest) {
     CFileSystemTree Tree;

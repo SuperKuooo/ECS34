@@ -6,6 +6,13 @@
 #include <memory>
 #include <vector>
 
+/* 1. What do you mean by getting the data for a file? Do I need a file member for the struct? What are we storing in the file?
+ * 2.
+ *
+ *
+ *
+ * */
+
 class CFileSystemTree{
     protected:
         struct SImplementation;
@@ -57,6 +64,7 @@ class CFileSystemTree{
                 CEntryIterator end();
                 CConstEntryIterator end() const;
                 CConstEntryIterator cend() const;
+                static bool Compare(CEntry *left, CEntry *right);
         };
 
         class CEntryIterator{
@@ -127,6 +135,7 @@ class CFileSystemTree{
 
         CEntryIterator NotFound();
         CConstEntryIterator NotFound() const;
+
 
 };
 
