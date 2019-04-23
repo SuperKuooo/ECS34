@@ -243,7 +243,7 @@ CFileSystemTree::CEntryIterator::~CEntryIterator() {
 }
 
 CFileSystemTree::CEntryIterator &CFileSystemTree::CEntryIterator::operator=(const CEntryIterator &iter) {
-    DImplementation->nodes_list = iter.DImplementation->nodes_list;
+    /*DImplementation->nodes_list = iter.DImplementation->nodes_list;
     DImplementation->counter = iter.DImplementation->counter;
     //DImplementation->location_ref = iter.DImplementation->location_ref;
 
@@ -255,7 +255,7 @@ CFileSystemTree::CEntryIterator &CFileSystemTree::CEntryIterator::operator=(cons
         if (iter.DImplementation->nodes_list.size()) {
             DImplementation->location_ref = iter.DImplementation->nodes_list[0];
         }
-    }
+    }*/
     return *this;
 }
 
