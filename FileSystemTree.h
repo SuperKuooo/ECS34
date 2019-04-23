@@ -15,7 +15,7 @@
 
 class CFileSystemTree{
     protected:
-        struct SImplementation;
+        struct SImplementation; //done
         std::unique_ptr< SImplementation > DImplementation;
 
     public:
@@ -27,11 +27,11 @@ class CFileSystemTree{
             friend class CEntryIterator;
             friend class CConstEntryIterator;
             protected:
-                struct SImplementation;
+                struct SImplementation; //done
                 std::unique_ptr< SImplementation > DImplementation;
             public:
-                CEntry();
-                CEntry(const CEntry &entry);
+                CEntry(); //done
+                CEntry(const CEntry &entry); //done
                 ~CEntry();
 
                 CEntry &operator=(const CEntry &entry);
