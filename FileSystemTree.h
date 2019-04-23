@@ -135,8 +135,6 @@ class CFileSystemTree{
 
         CEntryIterator NotFound();
         CConstEntryIterator NotFound() const;
-
-
 };
 
 #endif

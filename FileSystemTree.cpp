@@ -47,7 +47,10 @@ CFileSystemTree::CEntry &CFileSystemTree::CEntry::operator=(const CEntry &entry)
 }
 
 bool CFileSystemTree::CEntry::Valid() const {
-    // You code here
+    if (this == nullptr)
+        return false;
+    else
+        return this->DImplementation->current_node != "";
 }
 
 std::string CFileSystemTree::CEntry::Name() const {
@@ -55,7 +58,14 @@ std::string CFileSystemTree::CEntry::Name() const {
 }
 
 std::string CFileSystemTree::CEntry::FullPath() const {
-    // You code here
+    CEntry temp_node(*this);
+    std::string ret_val;
+
+    do {
+        ret_val += temp_node.DImplementation->current_node;
+    } while (this->DImplementation->parent_node != nullptr);
+
+    return ret_val;
 }
 
 std::string CFileSystemTree::CEntry::ToString() const {
@@ -72,10 +82,11 @@ CFileSystemTree::CEntry::operator std::string() const { //This code is garbo LOL
         temp += "   ";
     }
 
-    temp += this->DImplementation->current_node + "\n";
+    temp += this->DImplementation->current_node;
 
     if (!this->DImplementation->child_node.empty()) {
         for (auto it :this->DImplementation->child_node) {
+            temp += "\n|";
             temp += std::string(*it.first);
         }
         return temp;
