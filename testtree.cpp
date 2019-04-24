@@ -7,27 +7,27 @@ TEST(FileSystemTree, EmptyTreeTest) {
     EXPECT_EQ(std::string(Tree), "/");
     EXPECT_EQ(Tree.Root().FullPath(), "/");
     EXPECT_TRUE(Tree.Root().Valid());
-    //EXPECT_FALSE(Tree.Root().Parent().Valid());
+    EXPECT_FALSE(Tree.Root().Parent().Valid());
 }
 
 
 TEST(FileSystemTree, AddChildTest) {
 
-   CFileSystemTree Tree;
+    CFileSystemTree Tree;
 
-   EXPECT_TRUE(Tree.Root().AddChild("bin"));
-   EXPECT_TRUE(Tree.Root().AddChild("etc"));
-   EXPECT_TRUE(Tree.Root().AddChild("home"));
-   EXPECT_TRUE(Tree.Root().AddChild("dev"));
-   EXPECT_TRUE(Tree.Root().AddChild("proc"));
-   EXPECT_TRUE(Tree.Root().AddChild("usr"));
-   EXPECT_TRUE(Tree.Root().AddChild("var"));
-   EXPECT_FALSE(Tree.Root().AddChild("etc"));
-   EXPECT_TRUE(Tree.Root().AddChild("/home/cjnitta/ecs34", true));
-   EXPECT_FALSE(Tree.Root().AddChild("home/cjnitta/ecs34", true));
-   EXPECT_TRUE(Tree.Root().AddChild("home/cjnitta/ecs34/proj1", true));
-   EXPECT_TRUE(Tree.Root().AddChild("home/cjnitta/ecs34/proj2", true));
-   EXPECT_TRUE(Tree.Root().AddChild("home/cjnitta/ecs36c", true));
+    EXPECT_TRUE(Tree.Root().AddChild("bin"));
+    EXPECT_TRUE(Tree.Root().AddChild("etc"));
+    EXPECT_TRUE(Tree.Root().AddChild("home"));
+    EXPECT_TRUE(Tree.Root().AddChild("dev"));
+    EXPECT_TRUE(Tree.Root().AddChild("proc"));
+    EXPECT_TRUE(Tree.Root().AddChild("usr"));
+    EXPECT_TRUE(Tree.Root().AddChild("var"));
+    EXPECT_FALSE(Tree.Root().AddChild("etc"));
+    EXPECT_TRUE(Tree.Root().AddChild("/home/cjnitta/ecs34", true));
+    EXPECT_FALSE(Tree.Root().AddChild("home/cjnitta/ecs34", true));
+    EXPECT_TRUE(Tree.Root().AddChild("home/cjnitta/ecs34/proj1", true));
+    EXPECT_TRUE(Tree.Root().AddChild("home/cjnitta/ecs34/proj2", true));
+    EXPECT_TRUE(Tree.Root().AddChild("home/cjnitta/ecs36c", true));
 
     /*
    EXPECT_EQ(std::string(Tree), "/\n"
@@ -45,7 +45,7 @@ TEST(FileSystemTree, AddChildTest) {
                                 "`--var");*/
 }
 
-/*
+
 TEST(FileSystemTree, IterateNodeTest) {
     CFileSystemTree Tree;
 
@@ -85,10 +85,14 @@ TEST(FileSystemTree, IterateNodeTest) {
     --Iter;
     EXPECT_EQ(Iter->Name(), "home");
 
+
     CFileSystemTree::CEntryIterator Iter2 = Iter->begin()->begin();
     EXPECT_EQ(Iter2->Name(), "ecs34");
+
     CFileSystemTree::CEntryIterator Iter3 = Iter2->begin();
+
     EXPECT_EQ(Iter3->Name(), "proj1");
+
     EXPECT_EQ(Iter3->Parent().Name(), "ecs34");
     Iter3++;
     EXPECT_EQ(Iter3->Name(), "proj2");
@@ -96,8 +100,12 @@ TEST(FileSystemTree, IterateNodeTest) {
     EXPECT_EQ(Iter3->Parent().Parent().Name(), "cjnitta");
     EXPECT_EQ(Iter3->FullPath(), "/home/cjnitta/ecs34/proj2");
     Iter2++;
+
+
     EXPECT_EQ(Iter2->Name(), "ecs36c");
     EXPECT_EQ(Iter2->FullPath(), "/home/cjnitta/ecs36c");
+
+
     EXPECT_TRUE(Iter2->AddChild("../../bob", true));
     EXPECT_FALSE(Tree.Root().AddChild("/home/bob", true));
     EXPECT_EQ(Iter2->FullPath(), "/home/cjnitta/ecs36c");
@@ -128,6 +136,7 @@ TEST(FileSystemTree, FindNodeTest) {
     EXPECT_EQ(Tree.Find("/a/path/to/nowhere"), Tree.NotFound());
 }
 
+/*
 TEST(FileSystemTree, AddDataTest) {
     CFileSystemTree Tree;
 
@@ -160,8 +169,8 @@ TEST(FileSystemTree, AddDataTest) {
     EXPECT_FALSE(NodeIter2->SetData({'e', 'f', 'g', 'h'}));
     EXPECT_FALSE(Tree.Root().AddChild("home/cjnitta/ecs34/proj1/failedchild", true));
 
-}
-
+}*/
+/*
 TEST(FileSystemTree, RenameNodeTest) {
     CFileSystemTree Tree;
 
@@ -223,6 +232,7 @@ TEST(FileSystemTree, RenameNodeTest) {
                                  "`--var");
 
 }
+*/
 
 TEST(FileSystemTree, RemoveNodeTest) {
     CFileSystemTree Tree;
@@ -258,4 +268,4 @@ TEST(FileSystemTree, RemoveNodeTest) {
                                  "|--proc\n"
                                  "|--usr\n"
                                  "`--var");
-}*/
+}
