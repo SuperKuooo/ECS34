@@ -16,23 +16,18 @@ int main(int argc, char *argv[]) {
     std::vector<char> TempData;
 
     Tree.Root().AddChild("bin");
-    Tree.Root().AddChild("atc");
+    Tree.Root().AddChild("etc");
     Tree.Root().AddChild("home");
     Tree.Root().AddChild("/dev/efef");
     Tree.Root().AddChild("proc");
     Tree.Root().AddChild("usr");
     Tree.Root().AddChild("usr");
     Tree.Root().AddChild("var");
-    Tree.Root().AddChild("home/cjnitta/ecs34/proj1", true);
+    Tree.Root().AddChild("home/cjnitta/ecs34/proj1/k", true);
     Tree.Root().AddChild("home/cjnitta/ecs34/proj2", true);
     Tree.Root().AddChild("home/cjnitta/ecs36c", true);
 
-    CFileSystemTree::CEntryIterator Iter = Tree.Root().begin();
-    Iter++;
-    Iter++;
-    Iter++;
-    std::cout << Iter->SetData({'1', '2', '3', '4'}) << std::endl;
-    std::cout << Iter->GetData(TempData) << std::endl;
+    std::cout << std::string(Tree) << std::endl;
 
     return 0;
 }

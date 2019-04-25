@@ -1,7 +1,7 @@
 #include "FileSystemTree.h"
 #include "StringUtils.h"
 
-#define ROOT_STREAM "AQ22JEJQ RPSC6SEM P5YTYMWM 6GG2Q2WS KG66SLPB NPYCEBGN HFKG8SM5 RPTQR5SQ"
+#define TERMINATE_STREAM "AQ22J E JQ RP SC6SEM P5Y TYMdfM   6G G2Q2WS KGefgasdLPB NeofafCcEBGN HFKG 8SM5 RP TQR5SQ"
 
 #include <iostream>
 #include <map>
@@ -20,10 +20,12 @@ struct CFileSystemTree::CEntry::SImplementation { //This motherfuker is a doubly
 };
 
 struct CFileSystemTree::CEntryIterator::SImplementation {
+    CEntry *parent;
     std::map<std::string, CFileSystemTree::CEntry *>::iterator iter;
 };
 
 struct CFileSystemTree::CConstEntryIterator::SImplementation {
+    CEntry *parent;
     std::map<std::string, CFileSystemTree::CEntry *>::iterator iter;
 };
 
@@ -50,7 +52,7 @@ CFileSystemTree::CEntry &CFileSystemTree::CEntry::operator=(const CEntry &entry)
 }
 
 bool CFileSystemTree::CEntry::Valid() const {
-    if (this->DImplementation->current_node == ROOT_STREAM)
+    if (this->DImplementation->current_node == TERMINATE_STREAM)
         return false;
     return !this->DImplementation->current_node.empty();
 }
@@ -73,7 +75,7 @@ std::string CFileSystemTree::CEntry::FullPath() const {
 }
 
 std::string CFileSystemTree::CEntry::ToString() const {
-    // You code here
+    return std::string(*this);
 }
 
 
@@ -101,11 +103,16 @@ CFileSystemTree::CEntry::operator std::string() const { //This code is garbo LOL
 }
 
 bool CFileSystemTree::CEntry::Rename(const std::string &name) {
-    CEntryIterator it(this->Find(name));
+    CEntryIterator it(this->DImplementation->parent_node->Find(name));
     CFileSystemTree temp_tree;
-    if (it == temp_tree.NotFound())
+
+    if (it == temp_tree.NotFound()) {
+        this->DImplementation->parent_node->AddChild(name);
+        it = this->DImplementation->parent_node->Find(name);
+        it.DImplementation->iter->second = this;
         this->DImplementation->current_node = name;
-    else
+        this->DImplementation->parent_node->RemoveChild(name);
+    } else
         return false;
     return true;
 
@@ -116,7 +123,15 @@ size_t CFileSystemTree::CEntry::ChildCount() const {
 }
 
 bool CFileSystemTree::CEntry::SetChild(const std::string &name, CEntryIterator &iter) {
-    // You code here
+    CEntryIterator it, temp, erase;
+    if (this->AddChild(name)) {
+        temp = this->Find(name);
+    } else
+        return false;
+    temp.DImplementation->iter->second = iter.DImplementation->iter->second;
+    erase = iter.DImplementation->parent->Find(name);
+    iter.DImplementation->parent->DImplementation->child_node.erase(erase.DImplementation->iter->first);
+    return true;
 }
 
 bool CFileSystemTree::CEntry::AddChild(const std::string &path, bool addall) {
@@ -124,12 +139,17 @@ bool CFileSystemTree::CEntry::AddChild(const std::string &path, bool addall) {
     CEntry *new_node = new CEntry();
     CEntryIterator found(this->Find(dir_vect[0]));
     CFileSystemTree temp_tree;
+    if (!this->DImplementation->child_node.empty()) {
+        if (this->DImplementation->child_node.begin()->second->DImplementation->current_node == TERMINATE_STREAM) {
+            return false;
+        }
+    }
 
     if (path.empty() || !this->Valid()) {
         return false;
     } else {
         if (path[0] == '/') {
-            if (this->DImplementation->parent_node->DImplementation->current_node == ROOT_STREAM) {
+            if (this->DImplementation->parent_node->DImplementation->current_node == TERMINATE_STREAM) {
                 return this->AddChild(StringUtils::Slice(path, 1), true);
             } else {
                 return false;
@@ -147,7 +167,7 @@ bool CFileSystemTree::CEntry::AddChild(const std::string &path, bool addall) {
 
     if (found != temp_tree.NotFound()) {
         dir_vect.erase(dir_vect.begin());
-        return found.DImplementation->iter->second->AddChild(StringUtils::Join("/", dir_vect), true);
+        return found->AddChild(StringUtils::Join("/", dir_vect), true);
     }
     if (addall) {
         this->AddChild(dir_vect[0]);
@@ -167,6 +187,7 @@ bool CFileSystemTree::CEntry::AddChild(const std::string &path, bool addall) {
 
 /*multiple files*/
 bool CFileSystemTree::CEntry::RemoveChild(const std::string &path) {
+    std::vector<std::string> dir = StringUtils::Split(path);
     CFileSystemTree::CEntryIterator iter(this->Find(path));
     CFileSystemTree temp_tree;
 
@@ -179,10 +200,12 @@ bool CFileSystemTree::CEntry::RemoveChild(const std::string &path) {
 
 bool CFileSystemTree::CEntry::SetData(const std::vector<char> &data) {
     CEntry *temp = new CEntry;
+    temp->DImplementation->current_node = TERMINATE_STREAM;
+
     if (this->DImplementation->child_node.empty()) {
         for (auto elements: data) {
             this->DImplementation->child_node.insert(
-                    std::pair<std::string, CEntry *>(std::string(1, elements), nullptr));
+                    std::pair<std::string, CEntry *>(std::string(1, elements), temp));
         }
         return true;
     }
@@ -193,13 +216,12 @@ bool CFileSystemTree::CEntry::GetData(std::vector<char> &data) const {
     CConstEntryIterator iter;
     std::vector<char> temp;
 
-    //std::cout << this->DImplementation->current_node;
     if (!this->DImplementation->child_node.empty()) {
         for (iter = this->begin(); iter != this->end(); iter++) {
-            /*if (iter.DImplementation->iter->second != nullptr) {
+            if (iter.DImplementation->iter->second->DImplementation->current_node != TERMINATE_STREAM) {
                 return false;
             }
-            temp.push_back(iter.DImplementation->iter->first[0]);*/
+            temp.push_back(iter.DImplementation->iter->first[0]);
         }
         data = temp;
         return true;
@@ -217,9 +239,16 @@ const CFileSystemTree::CEntry &CFileSystemTree::CEntry::Parent() const {
 
 CFileSystemTree::CEntryIterator CFileSystemTree::CEntry::Find(const std::string &name) {
     std::vector<std::string> I_ran_out_of_ideas = StringUtils::Split(name, "/");
-    CEntry ref_node(*this);
+    CEntry *ref_node;
     CEntryIterator iter;
     CFileSystemTree temp_tree;
+    ref_node = this;
+
+    if (!name.empty()) {
+        if (name[0] == '/') {
+            return this->Find(StringUtils::Slice(name, 1));
+        }
+    }
 
     if (I_ran_out_of_ideas.size() == 1) {
         for (iter = this->begin(); iter != this->end(); iter++) {
@@ -231,13 +260,13 @@ CFileSystemTree::CEntryIterator CFileSystemTree::CEntry::Find(const std::string 
     } else {
         int counter = 0;
         do {
-            if (!ref_node.DImplementation->child_node.empty()) {
-                iter = ref_node.Find(I_ran_out_of_ideas[counter]);
+            if (!ref_node->DImplementation->child_node.empty()) {
+                iter = ref_node->Find(I_ran_out_of_ideas[counter]);
                 counter++;
                 if (counter >= I_ran_out_of_ideas.size())
                     break;
                 if (iter != temp_tree.NotFound())
-                    ref_node = *iter.DImplementation->iter->second;
+                    ref_node = iter.DImplementation->iter->second;
                 else {
                     iter = temp_tree.NotFound();
                     break;
@@ -259,17 +288,23 @@ CFileSystemTree::CEntryIterator CFileSystemTree::CEntry::Find(const std::string 
 }
 
 CFileSystemTree::CConstEntryIterator CFileSystemTree::CEntry::Find(const std::string &name) const {
-    // You code here
+    //CConstEntryIterator (this->Find(name));
+
+    //return temp;
 }
 
 CFileSystemTree::CEntryIterator CFileSystemTree::CEntry::begin() {
     CEntryIterator temp;
+    temp.DImplementation->parent = this;
     temp.DImplementation->iter = this->DImplementation->child_node.begin();
     return temp;
 }
 
 CFileSystemTree::CConstEntryIterator CFileSystemTree::CEntry::begin() const {
-    // You code here
+    CConstEntryIterator temp;
+    //temp.DImplementation->parent = this;
+    temp.DImplementation->iter = this->DImplementation->child_node.begin();
+    return temp;
 }
 
 CFileSystemTree::CConstEntryIterator CFileSystemTree::CEntry::cbegin() const {
@@ -278,12 +313,15 @@ CFileSystemTree::CConstEntryIterator CFileSystemTree::CEntry::cbegin() const {
 
 CFileSystemTree::CEntryIterator CFileSystemTree::CEntry::end() {
     CEntryIterator temp;
+    temp.DImplementation->parent = this;
     temp.DImplementation->iter = this->DImplementation->child_node.end();
     return temp;
 }
 
 CFileSystemTree::CConstEntryIterator CFileSystemTree::CEntry::end() const {
-    // You code here
+    CConstEntryIterator temp;
+    temp.DImplementation->iter = this->DImplementation->child_node.end();
+    return temp;
 }
 
 CFileSystemTree::CConstEntryIterator CFileSystemTree::CEntry::cend() const {
@@ -297,6 +335,7 @@ CFileSystemTree::CEntryIterator::CEntryIterator() : DImplementation(std::make_un
 CFileSystemTree::CEntryIterator::CEntryIterator(const CEntryIterator &iter) : DImplementation(
         std::make_unique<SImplementation>()) {
     DImplementation->iter = iter.DImplementation->iter;
+    DImplementation->parent = iter.DImplementation->parent;
 }
 
 CFileSystemTree::CEntryIterator::~CEntryIterator() {
@@ -305,6 +344,7 @@ CFileSystemTree::CEntryIterator::~CEntryIterator() {
 
 CFileSystemTree::CEntryIterator &CFileSystemTree::CEntryIterator::operator=(const CEntryIterator &iter) {
     DImplementation->iter = iter.DImplementation->iter;
+    DImplementation->parent = iter.DImplementation->parent;
     return *this;
 }
 
@@ -363,17 +403,16 @@ CFileSystemTree::CConstEntryIterator::CConstEntryIterator() : DImplementation(st
 CFileSystemTree::CConstEntryIterator::CConstEntryIterator(
         const CConstEntryIterator &iter) : DImplementation(
         std::make_unique<SImplementation>()) {
-    // You code here
+    DImplementation->iter = iter.DImplementation->iter;
 }
 
 CFileSystemTree::CConstEntryIterator::CConstEntryIterator(
         const CEntryIterator &iter) : DImplementation(
         std::make_unique<SImplementation>()) {
-    // You code here
+    DImplementation->iter = iter.DImplementation->iter;
 }
 
 CFileSystemTree::CConstEntryIterator::~CConstEntryIterator() {
-    // You code here
 }
 
 CFileSystemTree::CConstEntryIterator &
@@ -407,15 +446,22 @@ CFileSystemTree::CConstEntryIterator CFileSystemTree::CConstEntryIterator::opera
 }
 
 CFileSystemTree::CConstEntryIterator &CFileSystemTree::CConstEntryIterator::operator--() {
-    // You code here
+    std::map<std::string, CFileSystemTree::CEntry *>::iterator iter_temp;
+    iter_temp = DImplementation->iter;
+    --iter_temp;
+    DImplementation->iter = iter_temp;
+    return *this;
 }
 
 CFileSystemTree::CConstEntryIterator CFileSystemTree::CConstEntryIterator::operator--(int) {
-    // You code here
+    std::map<std::string, CFileSystemTree::CEntry *>::iterator iter_temp;
+    iter_temp = DImplementation->iter;
+    iter_temp--;
+    DImplementation->iter = iter_temp;
+    return *this;
 }
 
 const CFileSystemTree::CEntry &CFileSystemTree::CConstEntryIterator::operator*() const {
-    // You code here
 }
 
 const CFileSystemTree::CEntry *CFileSystemTree::CConstEntryIterator::operator->() const {
@@ -425,7 +471,7 @@ const CFileSystemTree::CEntry *CFileSystemTree::CConstEntryIterator::operator->(
 CFileSystemTree::CFileSystemTree() : DImplementation(std::make_unique<SImplementation>()) {
     DImplementation->root_node.DImplementation->current_node = "/";
     DImplementation->root_node.DImplementation->parent_node = new(CEntry);
-    DImplementation->root_node.DImplementation->parent_node->DImplementation->current_node = ROOT_STREAM;
+    DImplementation->root_node.DImplementation->parent_node->DImplementation->current_node = TERMINATE_STREAM;
     //lmao I mean it works.
 }
 
@@ -442,9 +488,6 @@ CFileSystemTree &CFileSystemTree::operator=(const CFileSystemTree &tree) {
     // You code here
 }
 
-static std::map<CFileSystemTree::CEntry *, std::string>
-flip_flip(const std::map<CFileSystemTree::CEntry *, std::string> &src);
-
 CFileSystemTree::CEntry &CFileSystemTree::Root() {
     return DImplementation->root_node;
 }
@@ -454,8 +497,7 @@ const CFileSystemTree::CEntry &CFileSystemTree::Root() const {
 }
 
 std::string CFileSystemTree::ToString() const {
-    return this->DImplementation->root_node.DImplementation->current_node;//child_node.begin()
-    //->first->DImplementation->current_node;
+    return this->DImplementation->root_node.DImplementation->current_node;
 }
 
 CFileSystemTree::operator std::string() const {
@@ -467,7 +509,8 @@ CFileSystemTree::CEntryIterator CFileSystemTree::Find(const std::string &path) {
 }
 
 CFileSystemTree::CConstEntryIterator CFileSystemTree::Find(const std::string &path) const {
-
+    CConstEntryIterator temp(this->DImplementation->root_node.Find(path));
+    return temp;
 }
 
 CFileSystemTree::CEntryIterator CFileSystemTree::NotFound() {
@@ -476,6 +519,6 @@ CFileSystemTree::CEntryIterator CFileSystemTree::NotFound() {
 }
 
 CFileSystemTree::CConstEntryIterator CFileSystemTree::NotFound() const {
-    // You code here
+    CFileSystemTree::CConstEntryIterator empty;
+    return empty;
 }
-
