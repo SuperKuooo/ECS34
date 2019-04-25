@@ -31,8 +31,8 @@ int main(int argc, char *argv[]) {
     Iter++;
     Iter++;
     Iter++;
-
-
+    std::cout << Iter->SetData({'1', '2', '3', '4'}) << std::endl;
+    std::cout << Iter->GetData(TempData) << std::endl;
 
     return 0;
 }

@@ -17,7 +17,6 @@ struct CFileSystemTree::CEntry::SImplementation { //This motherfuker is a doubly
     std::string current_node;
     std::map<std::string, CFileSystemTree::CEntry *> child_node;
     int node_level = 0;
-    bool true_for_file = true;
 };
 
 struct CFileSystemTree::CEntryIterator::SImplementation {
@@ -171,28 +170,20 @@ bool CFileSystemTree::CEntry::RemoveChild(const std::string &path) {
     CFileSystemTree::CEntryIterator iter(this->Find(path));
     CFileSystemTree temp_tree;
 
-    if (iter != temp_tree.NotFound())
-        this->DImplementation->child_node.erase(iter->DImplementation->iter);
-    else
+    if (iter == temp_tree.NotFound())
         return false;
+    else
+        this->DImplementation->child_node.erase(iter.DImplementation->iter);
     return true;
 }
 
 bool CFileSystemTree::CEntry::SetData(const std::vector<char> &data) {
     CEntry *temp = new CEntry;
-    if (this->DImplementation->true_for_file) {
-        //for (auto ch: data) {
-        //std::cout << ch;
-        //this->DImplementation->current_node = "dfef";
-        std::cout << std::string(*this);
-        this->DImplementation->child_node["a"];
-        std::cout << std::string(*this);//->DImplementation->current_node;
-        /*this->DImplementation->child_node.insert(std::pair<std::string, CEntry *>("b", temp));
-        this->DImplementation->child_node.insert(std::pair<std::string, CEntry *>("c", temp));
-        this->DImplementation->child_node.insert(std::pair<std::string, CEntry *>("d", temp));
-        */
-
-        //}
+    if (this->DImplementation->child_node.empty()) {
+        for (auto elements: data) {
+            this->DImplementation->child_node.insert(
+                    std::pair<std::string, CEntry *>(std::string(1, elements), nullptr));
+        }
         return true;
     }
     return false;
@@ -200,12 +191,19 @@ bool CFileSystemTree::CEntry::SetData(const std::vector<char> &data) {
 
 bool CFileSystemTree::CEntry::GetData(std::vector<char> &data) const {
     CConstEntryIterator iter;
+    std::vector<char> temp;
+
     //std::cout << this->DImplementation->current_node;
-    /*if (this->DImplementation->true_for_file) {
+    if (!this->DImplementation->child_node.empty()) {
         for (iter = this->begin(); iter != this->end(); iter++) {
-            data.push_back(iter.DImplementation->iter->first[0]);
+            /*if (iter.DImplementation->iter->second != nullptr) {
+                return false;
+            }
+            temp.push_back(iter.DImplementation->iter->first[0]);*/
         }
-    }*/
+        data = temp;
+        return true;
+    }
     return false;
 }
 
@@ -427,7 +425,6 @@ const CFileSystemTree::CEntry *CFileSystemTree::CConstEntryIterator::operator->(
 CFileSystemTree::CFileSystemTree() : DImplementation(std::make_unique<SImplementation>()) {
     DImplementation->root_node.DImplementation->current_node = "/";
     DImplementation->root_node.DImplementation->parent_node = new(CEntry);
-    DImplementation->root_node.DImplementation->true_for_file = false;
     DImplementation->root_node.DImplementation->parent_node->DImplementation->current_node = ROOT_STREAM;
     //lmao I mean it works.
 }
