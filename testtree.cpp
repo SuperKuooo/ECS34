@@ -29,7 +29,6 @@ TEST(FileSystemTree, AddChildTest) {
     EXPECT_TRUE(Tree.Root().AddChild("home/cjnitta/ecs34/proj2", true));
     EXPECT_TRUE(Tree.Root().AddChild("home/cjnitta/ecs36c", true));
 
-    /*
    EXPECT_EQ(std::string(Tree), "/\n"
                                 "|--bin\n"
                                 "|--dev\n"
@@ -42,7 +41,7 @@ TEST(FileSystemTree, AddChildTest) {
                                 "|     `--ecs36c\n"
                                 "|--proc\n"
                                 "|--usr\n"
-                                "`--var");*/
+                                "`--var");
 }
 
 
@@ -197,7 +196,7 @@ TEST(FileSystemTree, RenameNodeTest) {
     Iter++;
     EXPECT_EQ(Iter->Name(), "hop");
 
-    /*
+
     EXPECT_EQ(std::string(Tree), "/\n"
                                  "|--dev\n"
                                  "|--etc\n"
@@ -211,7 +210,7 @@ TEST(FileSystemTree, RenameNodeTest) {
                                  "|--proc\n"
                                  "|--usr\n"
                                  "`--var");
-                                     */
+
 
     auto UsrIter = Tree.Find("/usr");
     auto ECS34Iter = Tree.Find("/home/cjnitta/ecs34");
@@ -220,7 +219,7 @@ TEST(FileSystemTree, RenameNodeTest) {
     EXPECT_FALSE(ECS34Iter == Tree.NotFound());
 
     EXPECT_TRUE(UsrIter->SetChild("ecs34", ECS34Iter));
-    /*
+
     EXPECT_EQ(std::string(Tree), "/\n"
                                  "|--dev\n"
                                  "|--etc\n"
@@ -233,7 +232,7 @@ TEST(FileSystemTree, RenameNodeTest) {
                                  "|  `--ecs34\n"
                                  "|     |--proj1\n"
                                  "|     `--proj2\n"
-                                 "`--var");*/
+                                 "`--var");
 }
 
 
@@ -262,7 +261,7 @@ TEST(FileSystemTree, RemoveNodeTest) {
     EXPECT_FALSE(Iter->RemoveChild("bob"));
     EXPECT_TRUE(Iter->RemoveChild("cjnitta"));
     EXPECT_FALSE(Iter->RemoveChild("cjnitta"));
-    /*
+
     EXPECT_EQ(std::string(Tree), "/\n"
                                  "|--bin\n"
                                  "|--dev\n"
@@ -271,5 +270,5 @@ TEST(FileSystemTree, RemoveNodeTest) {
                                  "|--proc\n"
                                  "|--usr\n"
                                  "`--var");
-    */
+
 }

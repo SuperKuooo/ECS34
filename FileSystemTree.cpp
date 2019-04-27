@@ -67,6 +67,7 @@ std::string CFileSystemTree::CEntry::FullPath() const {
 
     if (!this->DImplementation->node_level)
         return "/";
+
     while (temp_node.DImplementation->node_level) {
         ret_val = "/" + temp_node.DImplementation->current_node + ret_val;
         temp_node = *temp_node.DImplementation->parent_node;
@@ -79,19 +80,36 @@ std::string CFileSystemTree::CEntry::ToString() const {
 }
 
 void CFileSystemTree::aux_string(std::string &tot_str, const CFileSystemTree::CEntry *node) {
-    CEntry *temp;
-    CFileSystemTree::CConstEntryIterator iter;
+    CFileSystemTree::CConstEntryIterator iter, rec;
+    std::vector<std::string> rewind_dir;
+    tot_str += "\n";
     for (iter = node->begin(); iter != node->end(); iter++) {
-        temp = iter.DImplementation->iter->second;
-        //std::cout << node->end()->DImplementation->current_node;
-        for (int i = 0; i < temp->DImplementation->node_level; i++) {
-            if (iter.DImplementation->iter->first ==
-                iter.DImplementation->parent->DImplementation->child_node.end()->first) {
-                tot_str += "|--";
-            } else
-                tot_str += "`--";
+        while (node->DImplementation->current_node != "/") {
+            rewind_dir.push_back(node->DImplementation->current_node);
+            node = node->DImplementation->parent_node;
         }
-        tot_str += iter.DImplementation->iter->first + "\n";
+
+        for (int i = 1; i <= iter.DImplementation->iter->second->DImplementation->node_level; i++) {
+            if (i == iter.DImplementation->iter->second->DImplementation->node_level) {
+                if (iter.DImplementation->iter->first !=
+                    node->DImplementation->child_node.rbegin()->first) {
+                    tot_str += "|--";
+                } else
+                    tot_str += "`--";
+            } else {
+                rec = node->Find(rewind_dir.back());
+                rewind_dir.pop_back();
+                node = node->DImplementation->child_node[rec.DImplementation->iter->first];
+                if (node->DImplementation->current_node ==
+                    node->DImplementation->parent_node->DImplementation->child_node.rbegin()->first) {
+                    tot_str += "   ";
+
+                } else
+                    tot_str += "|  ";
+
+            }
+        }
+        tot_str += iter.DImplementation->iter->first;
         if (!node->DImplementation->child_node.empty()) {
             aux_string(tot_str, iter.DImplementation->iter->second);
         }
@@ -103,9 +121,11 @@ CFileSystemTree::CEntry::operator std::string() const {
     //But honestly, nobody have time to fix it. It works. That's all it matters.
     std::string tot_str;
 
-    tot_str += this->DImplementation->current_node + "\n";
+    if (this->DImplementation->current_node == "/" and this->DImplementation->child_node.empty())
+        return "/";
+    tot_str += this->DImplementation->current_node;
     aux_string(tot_str, this);
-
+    tot_str.pop_back();
     return tot_str;
 }
 
@@ -302,10 +322,17 @@ CFileSystemTree::CEntryIterator CFileSystemTree::CEntry::Find(const std::string 
 }
 
 CFileSystemTree::CConstEntryIterator CFileSystemTree::CEntry::Find(const std::string &name) const {
-    //CConstEntryIterator (this->Find(name));
+    CConstEntryIterator iter;
+    CFileSystemTree temp_tree;
 
-    //return temp;
+    for (iter = this->begin(); iter != this->end(); iter++) {
+        if (iter.DImplementation->iter->second->DImplementation->current_node == name) {
+            return iter;
+        }
+    }
+    return temp_tree.NotFound();
 }
+
 
 CFileSystemTree::CEntryIterator CFileSystemTree::CEntry::begin() {
     CEntryIterator temp;
@@ -432,6 +459,7 @@ CFileSystemTree::CConstEntryIterator::~CConstEntryIterator() {
 CFileSystemTree::CConstEntryIterator &
 CFileSystemTree::CConstEntryIterator::operator=(const CConstEntryIterator &iter) {
     DImplementation->iter = iter.DImplementation->iter;
+    DImplementation->parent = iter.DImplementation->parent;
     return *this;
 }
 
