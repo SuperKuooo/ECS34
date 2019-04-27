@@ -147,29 +147,30 @@ namespace StringUtils {
     std::vector<std::string> Split(const std::string &str, const std::string &splt) {
         std::vector<std::string> x;
         std::string temp = str;
-        if (str.find("/") == std::string::npos) {
-            x.push_back(str);
-            return x;
-        }
+
         if (splt.empty()) {
             temp = StringUtils::Replace(temp, "\n", " ");
             temp = StringUtils::Replace(temp, "\t", " ");
             temp = StringUtils::Replace(temp, "\r", " ");
             temp = StringUtils::Replace(temp, "\b", " ");
             int counter = 0;
-            for (char &ch: temp) {
-                if (ch == ' ' and *(&ch + 1) == ' ') {
+            for (int i = 0; i < temp.length(); i++) {
+                if (temp[i] == ' ' and temp[i + 1] == ' ') {
                     int length = 1;
-                    while (*(&ch + length) == ' ') {
+                    do {
                         length++;
-                    }
-                    temp.erase(counter, length - 1);
+                    } while (temp[i + length] == ' ');
+                    temp.erase(counter, length);
                 }
                 counter++;
             }
             return StringUtils::Split(temp, " ");
         } else {
             size_t div = str.find(splt), div2;
+            if (div == std::string::npos) {
+                x.push_back(str);
+                return x;
+            }
             x.push_back(Slice(temp, 0, div));
             while (true) {
                 temp = &temp[div + 1];
@@ -253,5 +254,27 @@ namespace StringUtils {
         return matrix[len1][len2];
     }
 
+    std::string NormalizePath(std::string inpath)  {
+        std::string normalized;
+        std::vector<std::string> dir;
+        dir = StringUtils::Split(inpath, "/");
+        bool loop = true;
+        while (loop) {
+            for (int i = 0; i < int(dir.size()); i++) {
+                if (dir[i].find("..") != std::string::npos) {
+                    dir.erase(dir.begin() + i - 1);
+                    dir.erase(dir.begin() + i - 1);
+                    loop = true;
+                    break;
+                }
+                loop = false;
+            }
+        }
+        normalized = StringUtils::Join("/", dir);
+        normalized = StringUtils::Replace(normalized, "./", "/");
+        normalized = StringUtils::Replace(normalized, "//", "/");
+
+        return normalized;
+    }
 
 }

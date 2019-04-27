@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace StringUtils{
-    
+
 std::string Slice(const std::string &str, ssize_t start, ssize_t end=0);
 std::string Capitalize(const std::string &str);
 std::string Title(const std::string &str);
@@ -20,6 +20,7 @@ std::vector< std::string > Split(const std::string &str, const std::string &splt
 std::string Join(const std::string &str, const std::vector< std::string > &vect);
 std::string ExpandTabs(const std::string &str, int tabsize = 4);
 int EditDistance(const std::string &left, const std::string &right, bool ignorecase=false);
+std::string NormalizePath(std::string inpath);
 
 }
 

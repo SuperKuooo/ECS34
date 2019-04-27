@@ -129,8 +129,10 @@ class CFileSystemTree{
 
         CEntryIterator NotFound();
         CConstEntryIterator NotFound() const;
+        static void relevel_node(CEntry *iter);
         static void aux_string(std::string &tot_str, const CFileSystemTree::CEntry *node);
 };
 
 
 #endif
+
