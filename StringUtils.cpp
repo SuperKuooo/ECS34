@@ -154,7 +154,7 @@ namespace StringUtils {
             temp = StringUtils::Replace(temp, "\r", " ");
             temp = StringUtils::Replace(temp, "\b", " ");
             int counter = 0;
-            for (int i = 0; i < temp.length(); i++) {
+            for (size_t i = 0; i < temp.length(); i++) {
                 if (temp[i] == ' ' and temp[i + 1] == ' ') {
                     int length = 1;
                     do {
@@ -236,15 +236,15 @@ namespace StringUtils {
         }
 
         matrix[0][0] = 0;
-        for (int i = 1; i <= len1; ++i) {
+        for (size_t i = 1; i <= len1; ++i) {
             matrix[i][0] = i;
         }
-        for (int i = 1; i <= len2; ++i) {
+        for (size_t i = 1; i <= len2; ++i) {
             matrix[0][i] = i;
         }
 
-        for (int i = 1; i <= len1; ++i) {
-            for (int j = 1; j <= len2; ++j) {
+        for (size_t i = 1; i <= len1; ++i) {
+            for (size_t j = 1; j <= len2; ++j) {
                 matrix[i][j] = std::min({matrix[i - 1][j] + 1, matrix[i][j - 1] + 1,
                                          matrix[i - 1][j - 1] + (_left[i - 1] == _right[j - 1] ? 0 : 1)});
 
@@ -254,14 +254,18 @@ namespace StringUtils {
         return matrix[len1][len2];
     }
 
-    std::string NormalizePath(std::string inpath)  {
+    std::string NormalizePath(std::string inpath) {
         std::string normalized;
         std::vector<std::string> dir;
         dir = StringUtils::Split(inpath, "/");
         bool loop = true;
         while (loop) {
             for (int i = 0; i < int(dir.size()); i++) {
-                if (dir[i].find("..") != std::string::npos) {
+                if (dir[i] == "..") {
+                    if (i == 0) {
+                        normalized = "/";
+                        return normalized;
+                    }
                     dir.erase(dir.begin() + i - 1);
                     dir.erase(dir.begin() + i - 1);
                     loop = true;
@@ -273,6 +277,8 @@ namespace StringUtils {
         normalized = StringUtils::Join("/", dir);
         normalized = StringUtils::Replace(normalized, "./", "/");
         normalized = StringUtils::Replace(normalized, "//", "/");
+        if (normalized.empty())
+            normalized = "/";
 
         return normalized;
     }
