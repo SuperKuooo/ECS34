@@ -41,7 +41,6 @@ CFileSystemTree::CEntry::CEntry(const CEntry &entry) : DImplementation(std::make
 }
 
 CFileSystemTree::CEntry::~CEntry() {
-    // You code here
 }
 
 CFileSystemTree::CEntry &CFileSystemTree::CEntry::operator=(const CEntry &entry) {

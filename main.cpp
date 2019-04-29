@@ -16,21 +16,23 @@
 #include <map>
 #include <iostream>
 
-/*So what exactly do I need Directory Listing for? LOL
- *What do I need argc and argv for LOL
- *What do I need DFS for?
+/*So what exactly do I need Directory Listing for? LOL  Not clue.
+ *What do I need argc and argv for LOL                  Holly molly, I get it now.
+ *What do I need DFS for?                               Still not sure, looking into that.
  *
  * */
 
 /*Things I need to take care off
- * 1. writing destructor
- * 2. Check proj2 pdf
- * 3. fix tree
- * 4. check mv long path
- * 5. argv argc HOLY SHIT THIS HW IS HARD
+ * 1. writing destructor //Done Nothing to Write lmao. No new, or dynamically allocated memory
+ * 2. Check proj2 pdf    //
+ * 3. fix tree    //Not done
+ * 4. check mv long path  //lmao I will just pray that it doesn't break
+ * 5. argv argc //Done Literally just include one function
  *
  * idk everything
 */
+
+void DFS(const std::string &path, CFileSystemTree::CEntry &entry);
 
 
 int main(int argc, char *argv[]) {
@@ -39,7 +41,9 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> splt_command;
     bool done = false;
 
-    if()
+    if (argc >= 2) {
+        DFS(argv[1], Tree.Root());
+    }
 
 
     while (!done) {
@@ -213,20 +217,17 @@ int main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 }
 
-
 void DFS(const std::string &path, CFileSystemTree::CEntry &entry) {
     std::vector<std::tuple<std::string, bool> > Entries;
     std::string PathWithSlash = path;
-    if (path.back() != '/') {
+    if (PathWithSlash.back() != '/') {
         PathWithSlash += "/";
     }
-    std::cout << "In " << entry.FullPath() << std::endl;
     DirectoryListing::GetListing(path, Entries);
     for (auto &Entry : Entries) {
         if (std::get<1>(Entry)) {
             std::string DirName = std::get<0>(Entry);
-            if ((DirName != ".")and(DirName != ".."))
-            {
+            if ((DirName != ".") and (DirName != "..")) {
                 entry.AddChild(DirName);
                 DFS(PathWithSlash + DirName, *entry.Find(DirName));
             }
