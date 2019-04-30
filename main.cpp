@@ -45,6 +45,11 @@ int main(int argc, char *argv[]) {
         DFS(argv[1], Tree.Root());
     }
 
+    /*CFileSystemTree::CEntryIterator temp;
+    Tree.Root().AddChild("1");
+    temp = Tree.Root().Find("1");
+    temp.*/
+
 
     while (!done) {
         std::cout << "> ";
@@ -61,8 +66,8 @@ int main(int argc, char *argv[]) {
                 if (splt_command[1][0] == '/')
                     norm_path = StringUtils::NormalizePath(splt_command[1]);
                 else
-                    norm_path = StringUtils::NormalizePath(current_pos + splt_command[1]);
-                if (!Tree.Root().AddChild(StringUtils::NormalizePath(norm_path))) {
+                    norm_path = StringUtils::NormalizePath(current_pos + "/" + splt_command[1]);
+                if (!Tree.Root().AddChild(norm_path, true)) {
                     std::cout << "Error mkdir: failed to make directory " << splt_command[1] << std::endl;
                 }
             }
@@ -200,7 +205,7 @@ int main(int argc, char *argv[]) {
                             std::cout << "Error cp: failed to copy " << splt_command[1] << " to " << splt_command[2]
                                       << std::endl;
                         } else if (Tree.Root().Find(norm_target) == Tree.NotFound()) {
-                            Tree.Root().AddChild(norm_target);
+                            iter_cp.operator->()->Rename(norm_target);
                         } else {
                             CFileSystemTree::CEntryIterator iter_target;
                             iter_target = Tree.Root().Find(norm_target);

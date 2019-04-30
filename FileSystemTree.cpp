@@ -140,19 +140,17 @@ CFileSystemTree::CEntry::operator std::string() const {
 }
 
 bool CFileSystemTree::CEntry::Rename(const std::string &name) {
-    CEntryIterator it(this->DImplementation->parent_node->Find(name));
+    CEntryIterator temp(this->DImplementation->parent_node->Find(name));
     CFileSystemTree temp_tree;
 
-    if (it == temp_tree.NotFound()) {
+    if (temp == temp_tree.NotFound()) {
         this->DImplementation->parent_node->AddChild(name);
-        it = this->DImplementation->parent_node->Find(name);
-        it.DImplementation->iter->second = this;
-        this->DImplementation->current_node = name;
-        this->DImplementation->parent_node->RemoveChild(name);
-    } else
-        return false;
-    return true;
-
+        temp = this->DImplementation->parent_node->Find(name);
+        temp.DImplementation->iter->second->DImplementation->child_node = this->DImplementation->child_node;
+        this->DImplementation->parent_node->DImplementation->child_node.erase(this->DImplementation->current_node);
+        return true;
+    }
+    return false;
 }
 
 size_t CFileSystemTree::CEntry::ChildCount() const {
