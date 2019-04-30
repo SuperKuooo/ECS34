@@ -1,6 +1,8 @@
 #ifndef FILESYSTEMTREE_H
 #define FILESYSTEMTREE_H
 
+#define TERMINATE_STREAM "AQ22J E JQ RP SC 6S bEM P5Y TYMdfM 6G G2Q2WS KGefgasdLPB NeofafCcEBGN HFKG 8SM5 RP TQR5SQ"
+//LMAO I know. Like I said, it works. That's all it matters.
 #include <string>
 #include <iterator>
 #include <memory>

@@ -1,9 +1,11 @@
 #include "DirectoryListing.h"
 #include <dirent.h>
+#define TERMINATE_STREAM "AQ22J E JQ RP SC 6S bEM P5Y TYMdfM 6G G2Q2WS KGefgasdLPB NeofafCcEBGN HFKG 8SM5 RP TQR5SQ"
+
 
 namespace DirectoryListing {
 
-    bool GetListing(const std::string &path, std::vector<std::tuple<std::string, bool>> &entries) {
+    bool GetListing(const std::string &path, std::vector<std::tuple<std::string, std::string>> &entries) {
         DIR *Directory = opendir(path.c_str());
 
         if (!Directory) {
@@ -11,10 +13,15 @@ namespace DirectoryListing {
         }
         entries.clear();
         while (auto Entry = readdir(Directory)) {
-            entries.push_back(std::make_tuple<std::string, bool>(Entry->d_name, Entry->d_type & DT_DIR));
+            if(Entry->d_type & DT_DIR){
+                entries.push_back(std::make_tuple<std::string, std::string>(Entry->d_name, TERMINATE_STREAM));
+            }else{
+                std::string input; //Get file text
+                entries.push_back(std::make_tuple<std::string, std::string>(Entry->d_name, "Hello  World"));
+            }
         }
         closedir(Directory);
         return true;
     }
 
-};
+}

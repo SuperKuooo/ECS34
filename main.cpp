@@ -82,6 +82,11 @@ int main(int argc, char *argv[]) {
                 if (iter != Tree.NotFound()) {
                     if (!iter.operator->()->GetData(data)) {
                         std::cout << "Error cat: " << splt_command[1] << " is not a file" << std::endl;
+                    } else {
+                        for (auto ch: data) {
+                            std::cout << ch;
+                        }
+                        std::cout << std::endl;
                     }
                 } else {
                     std::cout << "Unknown directory: " << splt_command[1] << std::endl;
@@ -126,7 +131,7 @@ int main(int argc, char *argv[]) {
             }
         } else if (splt_command[0] == "tree") {
             if (splt_command.size() == 1) {
-                if (current_pos== "/") {
+                if (current_pos == "/") {
                     std::cout << std::string(Tree.Root()) << std::endl;
                 } else
                     std::cout << std::string(*Tree.Root().Find(current_pos).operator->()) << std::endl;
@@ -160,7 +165,7 @@ int main(int argc, char *argv[]) {
             }
         } else if (splt_command[0] == "cp") {
             if (splt_command.size() < 3) {
-                std::cout << "Error cp: missing parameter" << std::endl;
+                std::cout << "Error cp: missing parameter(s)" << std::endl;
             } else {
                 std::string norm_path;
                 if (splt_command[1][0] == '/') {
@@ -194,7 +199,7 @@ int main(int argc, char *argv[]) {
             }
         } else if (splt_command[0] == "mv") {
             if (splt_command.size() < 3) {
-                std::cout << "Error cp: missing parameter";
+                std::cout << "Error cp: missing parameter(s)";
             } else {
                 std::string norm_path;
                 if (splt_command[1][0] == '/') {
@@ -227,30 +232,35 @@ int main(int argc, char *argv[]) {
                 }
             }
         } else {
-            std::cout << "Unknown Command: " << command << std::endl;
+            std::cout << "Unknown command: " << command << std::endl;
         }
     }
     return EXIT_SUCCESS;
 }
 
 void DFS(const std::string &path, CFileSystemTree::CEntry &entry) {
-    std::vector<std::tuple<std::string, bool>> Entries;
+    std::vector<std::tuple<std::string, std::string>> Entries;
     std::string PathWithSlash = path;
     if (PathWithSlash.back() != '/') {
         PathWithSlash += "/";
     }
-    DirectoryListing::GetListing("/Users/superkuo/Documents/GitHub/ECS34/" + path, Entries);
+    DirectoryListing::GetListing("/Users/superkuo/Documents/GitHub/ECS34/ich/" + path, Entries);
     for (auto &Entry : Entries) {
-        if (std::get<1>(Entry)) {
+        std::string temp = std::get<1>(Entry);
+        if (temp == TERMINATE_STREAM) {
             std::string DirName = std::get<0>(Entry);
             if ((DirName != ".") and (DirName != "..")) {
                 entry.AddChild(DirName);
                 DFS(PathWithSlash + DirName, *entry.Find(DirName));
             }
         } else {
+            std::string s = std::get<1>(Entry);
+            std::vector<char> v(s.begin(), s.end());
+
             entry.AddChild(std::get<0>(Entry));
             CFileSystemTree::CEntryIterator iter(entry.Find(std::get<0>(Entry)));
-            //entry.SetData();
+
+            iter.operator->()->SetData(v);
         }
     }
 }

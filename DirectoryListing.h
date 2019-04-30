@@ -6,7 +6,7 @@
 #include <vector>
 
 namespace DirectoryListing {
-    bool GetListing(const std::string &path, std::vector<std::tuple<std::string, bool>> &entries);
+    bool GetListing(const std::string &path, std::vector<std::tuple<std::string, std::string>> &entries);
 }
 
 #endif

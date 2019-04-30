@@ -4,9 +4,6 @@
 #include <map>
 #include <algorithm>
 
-#define TERMINATE_STREAM "AQ22J E JQ RP SC 6S bEM P5Y TYMdfM 6G G2Q2WS KGefgasdLPB NeofafCcEBGN HFKG 8SM5 RP TQR5SQ"
-//LMAO I know. Like I said, it works. That's all it matters.
-
 
 struct CFileSystemTree::SImplementation {
     CFileSystemTree::CEntry root_node;
@@ -15,6 +12,7 @@ struct CFileSystemTree::SImplementation {
 struct CFileSystemTree::CEntry::SImplementation {
     CFileSystemTree::CEntry *parent_node;
     std::string current_node;
+    std::vector<char> data;
     std::map<std::string, CFileSystemTree::CEntry *> child_node;
     int node_level = 0;
 };
@@ -48,6 +46,7 @@ CFileSystemTree::CEntry &CFileSystemTree::CEntry::operator=(const CEntry &entry)
     this->DImplementation->child_node = entry.DImplementation->child_node;
     this->DImplementation->parent_node = entry.DImplementation->parent_node;
     this->DImplementation->node_level = entry.DImplementation->node_level;
+    this->DImplementation->data = entry.DImplementation->data;
 
     return *this;
 }
@@ -278,34 +277,24 @@ bool CFileSystemTree::CEntry::RemoveChild(const std::string &path) {
 }
 
 bool CFileSystemTree::CEntry::SetData(const std::vector<char> &data) {
-    CEntry *temp = new CEntry;
-    temp->DImplementation->current_node = TERMINATE_STREAM;
-
-    if (this->DImplementation->child_node.empty()) {
-        for (auto elements: data) {
-            this->DImplementation->child_node.insert(
-                    std::pair<std::string, CEntry *>(std::string(1, elements), temp));
-        }
+    if (this->DImplementation->data.empty()) {
+        this->DImplementation->data = data;
         return true;
     }
     return false;
+
 }
 
 bool CFileSystemTree::CEntry::GetData(std::vector<char> &data) const {
     CConstEntryIterator iter;
     std::vector<char> temp;
 
-    if (!this->DImplementation->child_node.empty()) {
-        for (iter = this->begin(); iter != this->end(); iter++) {
-            if (iter.DImplementation->iter->second->DImplementation->current_node != TERMINATE_STREAM) {
-                return false;
-            }
-            temp.push_back(iter.DImplementation->iter->first[0]);
-        }
-        data = temp;
+    if (this->DImplementation->data.empty()) {
+        return false;
+    } else {
+        data = this->DImplementation->data;
         return true;
     }
-    return false;
 }
 
 CFileSystemTree::CEntry &CFileSystemTree::CEntry::Parent() {
