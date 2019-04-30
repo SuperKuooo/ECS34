@@ -84,7 +84,6 @@ std::string CFileSystemTree::CEntry::ToString() const {
     for (ls = this->begin(); ls != this->end(); ls++) {
         ret_val += ls.DImplementation->iter->first + "\n";
     }
-    //ret_val.pop_back();
     return ret_val;
 }
 
@@ -215,6 +214,9 @@ bool CFileSystemTree::CEntry::AddChild(const std::string &path, bool addall) {
             return false;
         }
     }
+    if (!this->DImplementation->data.empty()) {
+        return false;
+    }
 
     if (path.empty()) {
         return false;
@@ -277,7 +279,7 @@ bool CFileSystemTree::CEntry::RemoveChild(const std::string &path) {
 }
 
 bool CFileSystemTree::CEntry::SetData(const std::vector<char> &data) {
-    if (this->DImplementation->data.empty()) {
+    if (this->DImplementation->data.empty() and this->DImplementation->child_node.empty()) {
         this->DImplementation->data = data;
         return true;
     }

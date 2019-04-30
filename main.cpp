@@ -45,6 +45,17 @@ int main(int argc, char *argv[]) {
         DFS(argv[i], Tree.Root());
     }
 
+    /*
+    Tree.Root().AddChild("home/cjnitta/ecs34/proj1", true);
+    auto NodeIter = Tree.Find("home/cjnitta/ecs34/proj1");
+    NodeIter->SetData({'a', 'b', 'c', 'd'});
+    std::vector<char> TempData;
+    NodeIter->GetData(TempData);
+    for (auto temp: TempData) {
+        std::cout << temp;
+    }*/
+
+
     while (!done) {
         std::cout << "> ";
         std::getline(std::cin, command);
@@ -244,7 +255,7 @@ void DFS(const std::string &path, CFileSystemTree::CEntry &entry) {
     if (PathWithSlash.back() != '/') {
         PathWithSlash += "/";
     }
-    DirectoryListing::GetListing("/Users/superkuo/Documents/GitHub/ECS34/ich/" + path, Entries);
+    DirectoryListing::GetListing(path, Entries);
     for (auto &Entry : Entries) {
         std::string temp = std::get<1>(Entry);
         if (temp == TERMINATE_STREAM) {
@@ -256,11 +267,9 @@ void DFS(const std::string &path, CFileSystemTree::CEntry &entry) {
         } else {
             std::string s = std::get<1>(Entry);
             std::vector<char> v(s.begin(), s.end());
-
             entry.AddChild(std::get<0>(Entry));
             CFileSystemTree::CEntryIterator iter(entry.Find(std::get<0>(Entry)));
-
-            iter.operator->()->SetData(v);
+            iter->SetData(v);
         }
     }
 }
