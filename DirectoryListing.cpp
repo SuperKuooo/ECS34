@@ -7,7 +7,6 @@
 
 
 namespace DirectoryListing {
-
     bool GetListing(const std::string &path, std::vector<std::tuple<std::string, std::string>> &entries) {
         DIR *Directory = opendir(path.c_str());
 
@@ -27,6 +26,7 @@ namespace DirectoryListing {
                     }
                     myfile.close();
                 }
+                temp.pop_back();
                 entries.push_back(std::make_tuple<std::string, std::string>(Entry->d_name, std::string(temp)));
             }
         }

@@ -45,17 +45,6 @@ int main(int argc, char *argv[]) {
         DFS(argv[i], Tree.Root());
     }
 
-    /*
-    Tree.Root().AddChild("home/cjnitta/ecs34/proj1", true);
-    auto NodeIter = Tree.Find("home/cjnitta/ecs34/proj1");
-    NodeIter->SetData({'a', 'b', 'c', 'd'});
-    std::vector<char> TempData;
-    NodeIter->GetData(TempData);
-    for (auto temp: TempData) {
-        std::cout << temp;
-    }*/
-
-
     while (!done) {
         std::cout << "> ";
         std::getline(std::cin, command);
@@ -97,7 +86,6 @@ int main(int argc, char *argv[]) {
                         for (auto ch: data) {
                             std::cout << ch;
                         }
-                        std::cout << std::endl;
                     }
                 } else {
                     std::cout << "Unknown directory: " << splt_command[1] << std::endl;
