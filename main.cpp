@@ -45,12 +45,6 @@ int main(int argc, char *argv[]) {
         DFS(argv[1], Tree.Root());
     }
 
-    /*CFileSystemTree::CEntryIterator temp;
-    Tree.Root().AddChild("1");
-    temp = Tree.Root().Find("1");
-    temp.*/
-
-
     while (!done) {
         std::cout << "> ";
         std::getline(std::cin, command);
@@ -78,8 +72,19 @@ int main(int argc, char *argv[]) {
                 std::cout << "Error cat: missing parameter";
             } else {
                 std::vector<char> data;
-                if (!Tree.Root().Find(splt_command[1]).operator->()->GetData(data)) {
-                    std::cout << "Error cat: " << splt_command[1] << " is not a file" << std::endl;
+                std::string norm_path;
+                if (splt_command[1][0] == '/')
+                    norm_path = StringUtils::NormalizePath(splt_command[1]);
+                else
+                    norm_path = StringUtils::NormalizePath(current_pos + "/" + splt_command[1]);
+
+                CFileSystemTree::CEntryIterator iter(Tree.Root().Find(norm_path));
+                if (iter != Tree.NotFound()) {
+                    if (!iter.operator->()->GetData(data)) {
+                        std::cout << "Error cat: " << splt_command[1] << " is not a file" << std::endl;
+                    }
+                } else {
+                    std::cout << "Unknown directory: " << splt_command[1] << std::endl;
                 }
             }
         } else if (splt_command[0] == "cd") {
@@ -121,16 +126,18 @@ int main(int argc, char *argv[]) {
             }
         } else if (splt_command[0] == "tree") {
             if (splt_command.size() == 1) {
-                std::cout << std::string(Tree.Root()) << std::endl;
+                std::cout << std::string(*Tree.Root().Find(current_pos).operator->()) << std::endl;
             } else {
+                CFileSystemTree::CEntryIterator iter;
                 if (splt_command[1][0] == '/') {
-                    std::cout
-                            << std::string(*Tree.Root().Find(StringUtils::NormalizePath(splt_command[1])).operator->());
+                    iter = Tree.Root().Find(StringUtils::NormalizePath(splt_command[1]));
                 } else {
-                    std::string norm_path = StringUtils::NormalizePath(current_pos + "/" + splt_command[1]);
-                    std::cout
-                            << std::string(*Tree.Root().Find(norm_path).operator->())
-                            << std::endl;
+                    iter = Tree.Root().Find(StringUtils::NormalizePath(current_pos + "/" + splt_command[1]));
+                }
+                if (iter != Tree.NotFound()) {
+                    std::cout << std::string(*iter.operator->()) << std::endl;
+                } else {
+                    std::cout << "Unknown directory: " << splt_command[1] << std::endl;
                 }
             }
         } else if (splt_command[0] == "ls") {
