@@ -41,8 +41,8 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> splt_command;
     bool done = false;
 
-    if (argc >= 2) {
-        DFS(argv[1], Tree.Root());
+    for (int i = 1; i < argc; i++) {
+        DFS(argv[i], Tree.Root());
     }
 
     while (!done) {
@@ -126,7 +126,10 @@ int main(int argc, char *argv[]) {
             }
         } else if (splt_command[0] == "tree") {
             if (splt_command.size() == 1) {
-                std::cout << std::string(*Tree.Root().Find(current_pos).operator->()) << std::endl;
+                if (current_pos== "/") {
+                    std::cout << std::string(Tree.Root()) << std::endl;
+                } else
+                    std::cout << std::string(*Tree.Root().Find(current_pos).operator->()) << std::endl;
             } else {
                 CFileSystemTree::CEntryIterator iter;
                 if (splt_command[1][0] == '/') {
@@ -134,6 +137,7 @@ int main(int argc, char *argv[]) {
                 } else {
                     iter = Tree.Root().Find(StringUtils::NormalizePath(current_pos + "/" + splt_command[1]));
                 }
+
                 if (iter != Tree.NotFound()) {
                     std::cout << std::string(*iter.operator->()) << std::endl;
                 } else {
@@ -230,12 +234,12 @@ int main(int argc, char *argv[]) {
 }
 
 void DFS(const std::string &path, CFileSystemTree::CEntry &entry) {
-    std::vector<std::tuple<std::string, bool> > Entries;
+    std::vector<std::tuple<std::string, bool>> Entries;
     std::string PathWithSlash = path;
     if (PathWithSlash.back() != '/') {
         PathWithSlash += "/";
     }
-    DirectoryListing::GetListing(path, Entries);
+    DirectoryListing::GetListing("/Users/superkuo/Documents/GitHub/ECS34/" + path, Entries);
     for (auto &Entry : Entries) {
         if (std::get<1>(Entry)) {
             std::string DirName = std::get<0>(Entry);
@@ -245,6 +249,8 @@ void DFS(const std::string &path, CFileSystemTree::CEntry &entry) {
             }
         } else {
             entry.AddChild(std::get<0>(Entry));
+            CFileSystemTree::CEntryIterator iter(entry.Find(std::get<0>(Entry)));
+            //entry.SetData();
         }
     }
 }
