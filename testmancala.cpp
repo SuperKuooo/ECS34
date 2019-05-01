@@ -3,6 +3,16 @@
 
 TEST(MancalaBoardTest, DefaultBoardTest){
     // Needs to test that default board is correct
+    CMancalaBoard MancalaBoard;
+    EXPECT_EQ(std::string(MancalaBoard), "P1          PITS\n"
+                                         "      5   4   3   2   1\n"
+                                         "/---------------------------\\\n"
+                                         "|   | 4 | 4 | 4 | 4 | 4 |   |\n"
+                                         "| 0 |-------------------| 0 |\n"
+                                         "|   | 4 | 4 | 4 | 4 | 4 |   |\n"
+                                         "\\---------------------------/\n"
+                                         "      1   2   3   4   5\n"
+                                         "             PITS          P2\n")
 }
 
 TEST(MancalaBoardTest, SetBoardTest){
@@ -18,7 +28,7 @@ TEST(MancalaBoardTest, BasicMoveTest){
 }
 
 TEST(MancalaBoardTest, ScoringMoveTest){
-    // Needs to test that basic scoring, non double moves, non steals are correct    
+    // Needs to test that basic scoring, non double moves, non steals are correct
 }
 
 TEST(MancalaBoardTest, DoubleMoveTest){
