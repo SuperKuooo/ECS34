@@ -1,4 +1,4 @@
-#include "MancalaBoard.h"
+#include "../include/MancalaBoard.h"
 #include <iostream>
 
 CMancalaBoard::CMancalaBoard(){
