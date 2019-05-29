@@ -2,7 +2,7 @@
 #define MAPROUTER_H
 
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <istream>
 
 
@@ -11,14 +11,17 @@ class CMapRouter{
     public:
         using TNodeID = unsigned long;
         using TStopID = unsigned long;
-        using TLocation = std::pair<double, double>;
+        using TLocation = std::pair<double, double>; //lat then lon
         using TPathStep = std::pair<std::string, TNodeID>;
-        using Hash = unsigned int;
-        using node_location = std::pair<TNodeID, TLocation>;
+
         static const TNodeID InvalidNodeID;
     private:
-        struct SImplementation;
-        std::map<Hash, SImplementation> davis_map;
+        struct SImplementation{
+            TLocation cood;
+            std::vector<std::pair<TNodeID, double>> adjacent_vect;
+            std::vector<std::pair<std::string, double>> tags;
+        };
+        std::unordered_map<TNodeID, SImplementation> davis_map;
 
     public:
         CMapRouter();

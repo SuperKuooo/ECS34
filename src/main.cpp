@@ -1,12 +1,19 @@
 //
 // Created by superkuo on 5/27/19.
 //
+
+
+/*Questions
+ * 1. Where to put SImplementation
+ * 2. Incomplete deceleration
+ * 3.
+ *
+ */
 #include <CSVReader.h>
-#include <CSVWriter.h>
 #include <XMLEntity.h>
 #include <XMLReader.h>
-#include <XMLWriter.h>
 #include <MapRouter.h>
+#include <unordered_map>
 #include <iostream>
 #include <string.h>
 #include <vector>
@@ -19,6 +26,7 @@ int main() {
     std::ifstream davis_osm("../data/davis.osm");
     std::ifstream stop_csv("../data/stops.csv");
     std::ifstream routes_csv("../data/routes.csv");
+    std::vector<CMapRouter::TNodeID> path;
     std::clock_t start;
     double duration;
 
@@ -29,9 +37,17 @@ int main() {
     } else
         std::cout << "Finished Load" << std::endl;
 
-    duration = (std::clock() - start) / (double) CLOCKS_PER_SEC;
 
+
+    auto load = std::clock();
+    duration = (load - start) / (double) CLOCKS_PER_SEC;
     std::cout << "Load Time: " << duration << '\n';
+
+
+    auto find_short = std::clock();
+    duration = (find_short - load) / (double) CLOCKS_PER_SEC;
+    std::cout << route.FindShortestPath(286750583, 1368576489, path);
+    std::cout << "Find Short Time: " << duration << '\n';
 
 
     return EXIT_SUCCESS;

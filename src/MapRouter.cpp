@@ -1,10 +1,13 @@
-#include "../include/MapRouter.h"
+#include <MapRouter.h>
 #include <cmath>
 #include <iostream>
 #include <string>
-#include <map>
+#include <algorithm>
+#include <unordered_map>
+#include <vector>
 #include <XMLEntity.h>
 #include <XMLReader.h>
+#include <values.h>
 
 const CMapRouter::TNodeID CMapRouter::InvalidNodeID = -1;
 
@@ -53,28 +56,116 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
     CXMLReader osm_in(osm);
     SXMLEntity entity_in;
     osm_in.ReadEntity(entity_in); //Reads in version and generator. AKA garbage
-
+    int counter = 0;
     do {
         osm_in.ReadEntity(entity_in, true);
         //better if statement
         if (entity_in.DType != SXMLEntity::EType::StartElement or entity_in.DNameData != "node")
             continue;
 
-
-        TNodeID node_id = TNodeID(std::stod(entity_in.AttributeValue("id")));
+        SImplementation new_node;
+        TNodeID node_id = std::stol(entity_in.AttributeValue("id"));
         TLocation cood = std::pair<double, double>(std::stod(entity_in.AttributeValue("lat")),
                                                    std::stod(entity_in.AttributeValue("lon")));
-        node_location new_node = std::pair<TNodeID, TLocation>(node_id, cood);
+        new_node.cood = cood;
 
-        //Can reduce time by just accessing it. Known location.
-        davis_map[new_node];
+        davis_map.insert(std::pair<TNodeID, SImplementation>(node_id, new_node));
+        counter++;
     } while (entity_in.DNameData != "way");
 
-    while (osm_in.ReadEntity(entity_in, true)) {
-        if (entity_in.DNameData == "ref") {
-        }
+    if (counter != davis_map.size()) {
+        std::cout << "Error: Losing values in hashtable" << std::endl;
     }
 
+
+    std::vector<std::unordered_map<TNodeID, SImplementation>::iterator> buffer_vect;
+    std::vector<std::pair<std::string, std::string>> way_tags;
+
+    while (osm_in.ReadEntity(entity_in, true)) {
+        bool oneway;
+        counter = 0;
+        int length;
+
+        while (entity_in.DNameData == "nd") {
+            if (entity_in.DType != SXMLEntity::EType::StartElement) {
+                osm_in.ReadEntity(entity_in, true);
+                continue;
+            }
+            TNodeID target_id = std::stol(entity_in.AttributeValue("ref"));
+            std::unordered_map<TNodeID, SImplementation>::iterator iter;
+            iter = davis_map.find(target_id);
+            if (iter == davis_map.end()) {
+                osm_in.ReadEntity(entity_in, true);
+                continue;
+            } else {
+                buffer_vect.emplace_back(iter);
+                osm_in.ReadEntity(entity_in, true);
+            }
+        }
+
+        while (entity_in.DNameData == "tag") {
+            if (entity_in.DType != SXMLEntity::EType::StartElement) {
+                osm_in.ReadEntity(entity_in, true);
+                continue;
+            }
+            way_tags.emplace_back(
+                    std::pair<std::string, std::string>(entity_in.AttributeValue("k"), entity_in.AttributeValue("v")));
+            osm_in.ReadEntity(entity_in, true);
+        }
+
+        length = buffer_vect.size();
+        oneway = std::find(way_tags.begin(), way_tags.end(), std::pair<std::string, std::string>("oneway", "yes")) !=
+                 way_tags.end();
+
+        while (counter <= length - 1) {
+            double lat1, lat2, lon1, lon2;
+            if (oneway and counter != length - 1) {
+                lat1 = buffer_vect[counter]->second.cood.first;
+                lon1 = buffer_vect[counter]->second.cood.second;
+                lat2 = buffer_vect[counter + 1]->second.cood.first;
+                lon2 = buffer_vect[counter + 1]->second.cood.second;
+                double distance = HaversineDistance(lat1, lon1, lat2, lon2);
+                buffer_vect[counter]->second.adjacent_vect.emplace_back(
+                        std::pair<TNodeID, double>(buffer_vect[counter + 1]->first, distance));
+                counter++;
+            } else {
+                if (counter != length - 1 and counter != 0) {
+                    lat1 = buffer_vect[counter]->second.cood.first;
+                    lon1 = buffer_vect[counter]->second.cood.second;
+                    lat2 = buffer_vect[counter + 1]->second.cood.first;
+                    lon2 = buffer_vect[counter + 1]->second.cood.second;
+                    double distance = HaversineDistance(lat1, lon1, lat2, lon2);
+                    buffer_vect[counter]->second.adjacent_vect.emplace_back(
+                            std::pair<TNodeID, double>(buffer_vect[counter - 1]->first, distance));
+                    buffer_vect[counter]->second.adjacent_vect.emplace_back(
+                            std::pair<TNodeID, double>(buffer_vect[counter + 1]->first, distance));
+                } else {
+                    if (!counter) {
+                        lat1 = buffer_vect[counter]->second.cood.first;
+                        lon1 = buffer_vect[counter]->second.cood.second;
+                        lat2 = buffer_vect[counter + 1]->second.cood.first;
+                        lon2 = buffer_vect[counter + 1]->second.cood.second;
+                        double distance = HaversineDistance(lat1, lon1, lat2, lon2);
+
+                        buffer_vect[counter]->second.adjacent_vect.emplace_back(
+                                std::pair<TNodeID, double>(buffer_vect[counter + 1]->first, distance));
+                    } else {
+                        lat1 = buffer_vect[counter]->second.cood.first;
+                        lon1 = buffer_vect[counter]->second.cood.second;
+                        lat2 = buffer_vect[counter - 1]->second.cood.first;
+                        lon2 = buffer_vect[counter - 1]->second.cood.second;
+                        double distance = HaversineDistance(lat1, lon1, lat2, lon2);
+                        buffer_vect[counter]->second.adjacent_vect.emplace_back(
+                                std::pair<TNodeID, double>(buffer_vect[counter - 1]->first, distance));
+                    }
+                }
+                counter++;
+            }
+        }
+        osm_in.ReadEntity(entity_in, true);
+        way_tags.clear();
+        buffer_vect.clear();
+    }
 }
 
 size_t CMapRouter::NodeCount() const {
@@ -110,7 +201,32 @@ bool CMapRouter::GetRouteStopsByRouteName(const std::string &route, std::vector<
 }
 
 double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) {
-    // Your code HERE
+    std::unordered_map<TNodeID, SImplementation>::iterator starting, ending;
+    starting = davis_map.find(src);
+    ending = davis_map.find(dest);
+
+    if (path.empty()) {
+        if (starting == davis_map.end() or ending == davis_map.end()) {
+            std::cout << "Invalid Input of src or dest for shortest" << std::endl;
+            return -1.0;
+        } else if (starting->second.adjacent_vect.empty() or ending == davis_map.end()) {
+            std::cout << "Starting Empty for shortest" << std::endl;
+        }
+    }
+    if (src == dest)
+        return 0.0;
+
+    //can reduce finding value time.
+    auto shortest = std::pair<TNodeID, double>(TNodeID(), MAXDOUBLE);
+    for (auto const &dist: starting->second.adjacent_vect) {
+        if (std::find(path.begin(), path.end(), dist.first) != path.end())
+            continue;
+        if (dist.second < shortest.second)
+            shortest = dist;
+    }
+    path.push_back(src);
+
+    return FindShortestPath(shortest.first, dest, path);
 }
 
 double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathStep> &path) {
