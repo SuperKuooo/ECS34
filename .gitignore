@@ -1,8 +1,4 @@
-/.idea
 /archive
 /libcsv-3.0.3
 /cmake-build-debug
-.txt
-.xml
-.DS_STORE
-
+/.idea
