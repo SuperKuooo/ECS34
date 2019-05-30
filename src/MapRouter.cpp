@@ -253,21 +253,15 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
                 continue;
             }
             if (adjacent_iter == dist_prev_map.end()) {
-                if (top_node_map.empty() or dist < top_node_map.back().second) {
-                    auto pair = std::pair<TNodeID, double>(neighbor.first, dist);
-                    top_node_map.push_back(pair);
-                    top_node_map[dist] = neighbor.first;
-                }
+                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.first));
                 TNodeDist = std::pair<TNodeID, double>(traverse_node->first, dist);
                 dist_prev_map.insert(std::pair<TNodeID, std::pair<TNodeID, double>>(neighbor.first, TNodeDist));
             } else {
                 if (dist < adjacent_iter->second.second) {
                     adjacent_iter->second.second = dist;
                 }
-                if (top_node_map.empty() or adjacent_iter->second.second < top_node_map.back().second) {
-                    auto pair = std::pair<TNodeID, double>(neighbor.first, dist);
-                    top_node_map.push_back(pair);
-                }
+                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.first));
+                //pickup from here.
             }
         }
 
