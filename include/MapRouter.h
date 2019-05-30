@@ -13,14 +13,14 @@ class CMapRouter{
         using TStopID = unsigned long;
         using TLocation = std::pair<double, double>; //lat then lon
         using TPathStep = std::pair<std::string, TNodeID>;
-
-        static const TNodeID InvalidNodeID;
-    private:
-        struct SImplementation{
+        using SImplementation = struct{
             TLocation cood;
             std::vector<std::pair<TNodeID, double>> adjacent_vect;
             std::vector<std::pair<std::string, double>> tags;
         };
+        static const TNodeID InvalidNodeID;
+
+    private:
         std::unordered_map<TNodeID, SImplementation> davis_map;
 
     public:

@@ -20,10 +20,9 @@
 #include <fstream>
 #include <ctime>
 
-
 int main() {
     CMapRouter route;
-    std::ifstream davis_osm("../data/davis.osm");
+    std::ifstream davis_osm("../data/davis_xml.xml");
     std::ifstream stop_csv("../data/stops.csv");
     std::ifstream routes_csv("../data/routes.csv");
     std::vector<CMapRouter::TNodeID> path;
@@ -38,16 +37,18 @@ int main() {
         std::cout << "Finished Load" << std::endl;
 
 
-
     auto load = std::clock();
     duration = (load - start) / (double) CLOCKS_PER_SEC;
     std::cout << "Load Time: " << duration << '\n';
 
-
     auto find_short = std::clock();
+    std::cout << route.FindShortestPath(1, 14, path) << std::endl;
     duration = (find_short - load) / (double) CLOCKS_PER_SEC;
-    std::cout << route.FindShortestPath(286750583, 1368576489, path);
-    std::cout << "Find Short Time: " << duration << '\n';
+
+    for (auto element:path) {
+        std::cout << element << std::endl;
+    }
+    //std::cout << "Find Short Time: " << duration << '\n';
 
 
     return EXIT_SUCCESS;
