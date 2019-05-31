@@ -2,6 +2,7 @@
 #define MAPROUTER_H
 
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include <istream>
 
@@ -17,11 +18,14 @@ class CMapRouter{
             TLocation cood;
             std::vector<std::pair<TNodeID, double>> adjacent_vect;
             std::vector<std::pair<std::string, double>> tags;
+            std::vector<std::pair<TStopID, char>> contain_bus_vect;
         };
         static const TNodeID InvalidNodeID;
 
     private:
+        std::map<TNodeID, TLocation> cheating_LOL;
         std::unordered_map<TNodeID, SImplementation> davis_map;
+        std::unordered_map<TStopID, TNodeID>stop_node_map;
 
     public:
         CMapRouter();

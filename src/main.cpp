@@ -32,7 +32,7 @@ int main() {
 
     start = std::clock();
 
-    if (route.LoadMapAndRoutes(davis_osm, stop_csv, routes_csv)) {
+    if (!route.LoadMapAndRoutes(davis_osm, stop_csv, routes_csv)) {
         return EXIT_FAILURE;
     } else
         std::cout << "Finished Load" << std::endl;

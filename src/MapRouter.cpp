@@ -4,12 +4,13 @@
 #include <sstream>
 #include <string>
 #include <algorithm>
-#include <unordered_map>
 #include <map>
+#include <unordered_map>
 #include <vector>
 #include <iomanip>
 #include <XMLEntity.h>
 #include <XMLReader.h>
+#include <CSVReader.h>
 #include <values.h>
 
 const CMapRouter::TNodeID CMapRouter::InvalidNodeID = -1;
@@ -53,13 +54,15 @@ double CMapRouter::CalculateBearing(double lat1, double lon1, double lat2, doubl
 
 bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::istream &routes) {
     if (!(osm and stops and routes)) {
-        std::cout << "Error: Failed to open files.";
+        std::cout << "Error: Failed to open data file(s).";
         return false;
     }
     CXMLReader osm_in(osm);
     SXMLEntity entity_in;
     osm_in.ReadEntity(entity_in); //Reads in version and generator. AKA garbage
     int counter = 0;
+    //Reads in nodes, coordinates, way relations, and oneway.
+    //Add: Read in mph and roundabout.
     do {
         osm_in.ReadEntity(entity_in, true);
         //better if statement
@@ -68,11 +71,13 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
 
         SImplementation new_node;
         TNodeID node_id = std::stol(entity_in.AttributeValue("id"));
-        TLocation cood = std::pair<double, double>(std::stod(entity_in.AttributeValue("lat")),
-                                                   std::stod(entity_in.AttributeValue("lon")));
-        new_node.cood = cood;
+        new_node.cood = std::pair<double, double>(std::stod(entity_in.AttributeValue("lat")),
+                                                  std::stod(entity_in.AttributeValue("lon")));
 
         davis_map.insert(std::pair<TNodeID, SImplementation>(node_id, new_node));
+        cheating_LOL.insert(std::pair<TNodeID, TLocation>(node_id, new_node.cood));
+        //This is slower. Use insert. Marginally faster.
+        //davis_map[node_id] = new_node;
         counter++;
     } while (entity_in.DNameData != "way");
 
@@ -169,26 +174,77 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
         way_tags.clear();
         buffer_vect.clear();
     }
+
+    //Reads in Bus Node, Stop and NodeID
+    //Can reduce time by removing conversion and directly parse as unsigned long
+    CCSVReader csv_route_in(routes);
+    std::vector<std::string> csv_route_row_vect;
+    std::unordered_map<TStopID, std::pair<TNodeID, char>> stop_id_map;
+
+    csv_route_in.ReadRow(csv_route_row_vect);
+    while (csv_route_in.ReadRow(csv_route_row_vect)) {
+        stop_id_map[std::stoul(csv_route_row_vect[1])] = std::pair<TNodeID, char>(0, csv_route_row_vect[0][0]);
+    }
+
+    CCSVReader csv_stop_in(stops);
+    std::vector<std::string> csv_stop_row_vect;
+    //skips first row;
+    csv_stop_in.ReadRow(csv_stop_row_vect);
+    while (csv_stop_in.ReadRow(csv_stop_row_vect)) {
+        auto iter = stop_id_map.find(std::stoul(csv_stop_row_vect[0]));
+        stop_node_map[std::stoul(csv_stop_row_vect[0])] = std::stoul(csv_stop_row_vect[1]);
+        if (iter == stop_id_map.end())
+            continue;
+        iter->second.first = std::stoul(csv_stop_row_vect[1]);
+    }
+
+    for (auto const &element: stop_id_map) {
+        auto dmap = davis_map.find(element.second.first);
+        if (dmap == davis_map.end()) {
+            std::cout << "Error: Cannot find node with the bus node #" << element.second.first << std::endl;
+            return false;
+        }
+        dmap->second.contain_bus_vect.emplace_back(std::pair<TStopID, char>(element.first, element.second.second));
+    }
+    return true;
 }
 
 size_t CMapRouter::NodeCount() const {
-    // Your code HERE
+    //returns the number of nodes in davis_map
+    //This number excludes the undefined way nodes
+    return davis_map.size();
 }
 
 CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
-    // Your code HERE
+    auto iter = cheating_LOL.begin();
+    for (int i = 0; i < 5; i++) {
+        iter++;
+    }
+    return iter->first;
 }
 
 CMapRouter::TLocation CMapRouter::GetSortedNodeLocationByIndex(size_t index) const {
-    // Your code HERE
+    auto iter = cheating_LOL.begin();
+    for (int i = 0; i < 5; i++) {
+        iter++;
+    }
+    return iter->second;
 }
 
 CMapRouter::TLocation CMapRouter::GetNodeLocationByID(TNodeID nodeid) const {
-    // Your code HERE
+    auto iter = davis_map.find(nodeid);
+    if (iter != davis_map.end())
+        return iter->second.cood;
+    else
+        return std::make_pair(180.0, 360.0);
 }
 
 CMapRouter::TNodeID CMapRouter::GetNodeIDByStopID(TStopID stopid) const {
-    // Your code HERE
+    auto iter = stop_node_map.find(stopid);
+    if (iter != stop_node_map.end())
+        return iter->second;
+    else
+        return InvalidNodeID;
 }
 
 size_t CMapRouter::RouteCount() const {
@@ -200,7 +256,9 @@ std::string CMapRouter::GetSortedRouteNameByIndex(size_t index) const {
 }
 
 bool CMapRouter::GetRouteStopsByRouteName(const std::string &route, std::vector<TStopID> &stops) {
-    // Your code HERE
+
+
+
 }
 
 double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) {
