@@ -43,6 +43,7 @@ class CMapRouter{
         double FindShortestPath(TNodeID src, TNodeID dest, std::vector< TNodeID > &path);
         double FindFastestPath(TNodeID src, TNodeID dest, std::vector< TPathStep > &path);
         bool GetPathDescription(const std::vector< TPathStep > &path, std::vector< std::string > &desc) const;
+        bool GetShortDescription(const std::vector<TNodeID> &path, std::vector<std::string> &desc) const;
 };
 
 #endif
