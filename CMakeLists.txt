@@ -1,6 +1,6 @@
 set(CMAKE_CXX_STANDARD 14)
 cmake_minimum_required(VERSION 3.13)
-project(proj4)
+project(ECS34)
 
 set(CMAKE_CXX_STANDARD 14)
 include_directories(${EXPAT_INCLUDE_DIRS} ./lib ./include)
@@ -20,7 +20,7 @@ set(
         lib/libcsv.c
 )
 
-add_executable(proj4 ${SOURCE_FILES})
+add_executable(ECS34 ${SOURCE_FILES})
 target_link_libraries(${PROJECT_NAME} ${EXPAT_LIBRARIES})
 
 #Seek help from this post. Literally just copied the whole thing.

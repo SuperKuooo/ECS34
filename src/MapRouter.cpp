@@ -1,11 +1,13 @@
 #include <MapRouter.h>
 #include <cmath>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <algorithm>
 #include <unordered_map>
 #include <map>
 #include <vector>
+#include <iomanip>
 #include <XMLEntity.h>
 #include <XMLReader.h>
 #include <values.h>
@@ -221,7 +223,7 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
 
     //Initializing the first node
     std::pair<TNodeID, double> TNodeDist = std::pair<TNodeID, double>(src, 0);
-    dist_prev_map.insert(std::pair<TNodeID, std::pair<TNodeID, double>>(src, TNodeDist));
+    dist_prev_map.insert(std::pair<TNodeID, std::pair<TNodeID, double >>(src, TNodeDist));
 
     //traverse_node is used to traverse
     auto traverse_node = dist_prev_map.find(src);
@@ -253,31 +255,25 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
                 continue;
             }
             if (adjacent_iter == dist_prev_map.end()) {
-                if (top_node_map.empty() or dist < top_node_map.back().second) {
-                    auto pair = std::pair<TNodeID, double>(neighbor.first, dist);
-                    top_node_map.push_back(pair);
-                    top_node_map[dist] = neighbor.first;
-                }
+                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.first));
                 TNodeDist = std::pair<TNodeID, double>(traverse_node->first, dist);
-                dist_prev_map.insert(std::pair<TNodeID, std::pair<TNodeID, double>>(neighbor.first, TNodeDist));
+                dist_prev_map.insert(std::pair<TNodeID, std::pair<TNodeID, double >>(neighbor.first, TNodeDist));
             } else {
                 if (dist < adjacent_iter->second.second) {
                     adjacent_iter->second.second = dist;
                 }
-                if (top_node_map.empty() or adjacent_iter->second.second < top_node_map.back().second) {
-                    auto pair = std::pair<TNodeID, double>(neighbor.first, dist);
-                    top_node_map.push_back(pair);
-                }
+                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.first));
             }
         }
-
         if (!top_node_map.empty()) {
-            while (visited_map.find(top_node_map.back().first) != visited_map.end()) {
-                top_node_map.pop_back();
+            while (visited_map.find(top_node_map.begin()->second) != visited_map.end()) {
+                auto it = top_node_map.find(top_node_map.begin()->first);
+                top_node_map.erase(it);
             }
         }
         //traverse the current node
-        traverse_node = dist_prev_map.find(top_node_map.back().first);
+        traverse_node = dist_prev_map.find(top_node_map.begin()->second);
+        //int i = traverse_node->first;
         traverse_iter = davis_map.find(traverse_node->first);
     }
 
@@ -288,12 +284,72 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
         path.insert(path.begin(), temp->first);
         loopback = temp->second.first;
     }
+    path.insert(path.begin(), src);
     return 1;
 }
 
 double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathStep> &path) {
     // Your code HERE
 }
+
+
+bool
+CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, std::vector<std::string> &desc) const {
+    int length = path.size() - 2;
+
+    for (int i = 0; i <= length; i++) {
+        std::stringstream print;
+        int degrees;
+        double minutes, seconds;
+        auto dir1 = davis_map.find(path[i]);
+        auto dir2 = davis_map.find(path[i + 1]);
+        double angle = CalculateBearing(dir1->second.cood.first, dir1->second.cood.second,
+                                        dir2->second.cood.first, dir2->second.cood.second);
+//        angle /= 45;
+//        switch (int(angle)) {
+//
+//            case 0:
+//                print += "NE";
+//                break;
+//            case 1:
+//                print += "NE";
+//
+//                break;
+//            case 2:
+//                print += "NE";
+//                break;
+//            case 3:
+//                print += "NE";
+//                break;
+//            case 4:
+//                print += "NE";
+//                break;
+//            case 5:
+//                print += "NE";
+//                break;
+//            case 6:
+//                print += "NE";
+//                break;
+//            case 7:
+//                print += "NE";
+//                break;
+        degrees = int(dir1->second.cood.first);
+        minutes = (dir1->second.cood.first - degrees) * 60;
+        seconds = (minutes - int(minutes)) * 60;
+        print << degrees << "d " << int(minutes) << "' ";
+        print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
+
+        degrees = int(dir1->second.cood.second);
+        minutes = (dir1->second.cood.second - degrees) * 60;
+        seconds = (minutes - int(minutes)) * 60;
+        print << degrees << "d " << int(minutes) << "' ";
+        print << std::fixed << std::setprecision(2) << seconds << "\" E";
+
+        desc.push_back(print.str());
+
+    }
+}
+
 
 bool CMapRouter::GetPathDescription(const std::vector<TPathStep> &path, std::vector<std::string> &desc) const {
     // Your code HERE
