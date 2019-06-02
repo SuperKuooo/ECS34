@@ -21,6 +21,7 @@
 #include <fstream>
 #include <ctime>
 
+/*
 int main(int argc, char *argv[]){
     std::string command;
     std::vector<std::string> split_command;
@@ -63,14 +64,14 @@ int main(int argc, char *argv[]){
         }
     }
     return EXIT_SUCCESS;
-}
+}*/
 
-/*
+
 int main() {
     CMapRouter route;
-    std::ifstream davis_osm("../data/davis.osm");
-    std::ifstream stop_csv("../data/stops.csv");
-    std::ifstream routes_csv("../data/routes.csv");
+    std::ifstream davis_osm("../data/davis_xml.xml");
+    std::ifstream stop_csv("../data/shortstop.csv");
+    std::ifstream routes_csv("../data/short.csv");
     std::vector<CMapRouter::TNodeID> path_ID;
     std::vector<std::string> path_str;
     std::clock_t start;
@@ -88,7 +89,7 @@ int main() {
     std::cout << "Load Time: " << duration << '\n';
 
     auto find_short = std::clock();
-    std::cout << "States: " << route.FindShortestPath(95710382, 2782126874, path_ID) << std::endl;
+    std::cout << "States: " << route.FindShortestPath(4, 3, path_ID) << std::endl;
     route.GetShortDescription(path_ID, path_str);
     duration = (find_short - load) / (double) CLOCKS_PER_SEC;
 
@@ -99,4 +100,3 @@ int main() {
 
     return EXIT_SUCCESS;
 }
- */
