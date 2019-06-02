@@ -16,6 +16,7 @@ set(
         src/CSVWriter.cpp
         src/XMLReader.cpp
         src/XMLWriter.cpp
+        src/StringUtils.cpp
 
         lib/libcsv.c
 )

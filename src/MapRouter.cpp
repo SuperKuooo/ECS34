@@ -298,6 +298,7 @@ CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
 }
 
 CMapRouter::TLocation CMapRouter::GetSortedNodeLocationByIndex(size_t index) const {
+    //need to add error handling
     auto iter = cheating_LOL.begin();
     for (int i = 0; i < 5; i++) {
         iter++;
@@ -355,7 +356,7 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
     auto traverse_node = dist_prev_map.find(src);
 
     //Initializing the visisted list
-    std::unordered_map<TNodeID, nullptr_t> visited_map;
+    std::unordered_map<TNodeID, std::nullptr_t> visited_map;
 
     //Initializing a vector that keeps track of the closest node
     //Just incase of conflict, I will think of something that deal with this when that happens
@@ -435,7 +436,7 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
     auto traverse_node = dist_prev_map.find(src);
 
     //Initializing the visisted list
-    std::unordered_map<TNodeID, nullptr_t> visited_map;
+    std::unordered_map<TNodeID, std::nullptr_t> visited_map;
 
     //Initializing a vector that keeps track of the closest node
     //Just incase of conflict, I will think of something that deal with this when that happens
