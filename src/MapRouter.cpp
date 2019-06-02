@@ -19,6 +19,27 @@
 
 const CMapRouter::TNodeID CMapRouter::InvalidNodeID = -1;
 
+double CMapRouter::PathToTime(std::vector<TNodeID> &path) {
+    auto iter_post = ++path.begin();
+    double tot_time = 0;
+    for (auto const &element:path) {
+        auto iter = davis_map.find(element);
+        double time = -1;
+        for (auto stct:iter->second.adjacent_node_vect) {
+            if (stct.ID == *iter_post) {
+                time = stct.time * WALK_SPEED / stct.speed;
+            }
+        }
+        tot_time += time;
+        if (iter_post++ == path.end()) {
+            break;
+        }
+    }
+    path.clear();
+    return tot_time;
+}
+
+
 CMapRouter::CMapRouter() {
 
 }
@@ -62,25 +83,6 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
         return false;
     }
 
-    CCSVReader stop_in(stops);
-    CCSVReader route_in(routes);
-    std::unordered_map<TStopID, TNodeID> stop_to_node_map;
-    std::unordered_map<TNodeID, std::pair<TStopID, char>> total_route_list;
-    std::vector<std::string> row_vect;
-
-    stop_in.ReadRow(row_vect);
-    while (stop_in.ReadRow(row_vect)) {
-        stop_to_node_map[std::stoul(row_vect[0])] = std::stoul(row_vect[1]);
-        total_route_list[std::stoul(row_vect[1])] = std::make_pair(std::stoul(row_vect[0]), '-');
-    }
-
-    route_in.ReadRow(row_vect);
-    while (route_in.ReadRow(row_vect)) {
-        TNodeID temp_node = stop_to_node_map.find(std::stoul(row_vect[1]))->second;
-        auto map_iter = total_route_list.find(temp_node);
-        map_iter->second.second = row_vect[0][0];
-    }
-
 
     CXMLReader osm_in(osm);
     SXMLEntity entity_in;
@@ -111,8 +113,6 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
     }
 
 
-
-
     while (osm_in.ReadEntity(entity_in, true)) {
         bool oneway = false;
         bool roundabout = false;
@@ -133,11 +133,6 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
                 osm_in.ReadEntity(entity_in, true);
                 continue;
             } else {
-                auto line_line = total_route_list.find(iter->first);
-                if (line_line != total_route_list.end() and line_line->second.second != '-') {
-                    iter->second.bus = true;
-                    bus_friend++;
-                }
                 buffer_vect.emplace_back(iter);
                 osm_in.ReadEntity(entity_in, true);
             }
@@ -173,82 +168,118 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
             lat1 = buffer_vect[counter]->second.cood.first;
             lon1 = buffer_vect[counter]->second.cood.second;
             if (oneway or roundabout) {
+                buffer_vect[counter]->second.oneway = oneway;
                 if (counter != length - 1) {
                     lat2 = buffer_vect[counter + 1]->second.cood.first;
                     lon2 = buffer_vect[counter + 1]->second.cood.second;
                     double time = HaversineDistance(lat1, lon1, lat2, lon2) / WALK_SPEED;
-                    buffer_vect[counter]->second.adjacent_node_vect.emplace_back(
-                            std::pair<TNodeID, double>(buffer_vect[counter + 1]->first, time));
+                    TImplementation temp;
+                    temp.ID = buffer_vect[counter + 1]->first;
+                    temp.time = time;
+                    temp.speed = speed;
+                    buffer_vect[counter]->second.adjacent_node_vect.emplace_back(temp);
                 }
                 counter++;
                 if (roundabout and counter == length - 1) {
                     lat2 = buffer_vect[0]->second.cood.first;
                     lon2 = buffer_vect[0]->second.cood.second;
                     double time = HaversineDistance(lat1, lon1, lat2, lon2) / WALK_SPEED;
-                    buffer_vect[counter]->second.adjacent_node_vect.emplace_back(
-                            std::pair<TNodeID, double>(buffer_vect[0]->first, time));
+                    TImplementation temp;
+                    temp.ID = buffer_vect[0]->first;
+                    temp.time = time;
+                    temp.speed = speed;
+                    buffer_vect[counter]->second.adjacent_node_vect.emplace_back(temp);
                 }
             } else {
                 if (counter != length - 1 and counter != 0) {
                     lat2 = buffer_vect[counter + 1]->second.cood.first;
                     lon2 = buffer_vect[counter + 1]->second.cood.second;
                     double time = HaversineDistance(lat1, lon1, lat2, lon2) / WALK_SPEED;
-                    buffer_vect[counter]->second.adjacent_node_vect.emplace_back(
-                            std::pair<TNodeID, double>(buffer_vect[counter + 1]->first, time));
+                    TImplementation temp;
+                    temp.ID = buffer_vect[counter + 1]->first;
+                    temp.time = time;
+                    temp.speed = speed;
+                    buffer_vect[counter]->second.adjacent_node_vect.emplace_back(temp);
 
                     lat2 = buffer_vect[counter - 1]->second.cood.first;
                     lon2 = buffer_vect[counter - 1]->second.cood.second;
                     time = HaversineDistance(lat1, lon1, lat2, lon2) / WALK_SPEED;
-                    buffer_vect[counter]->second.adjacent_node_vect.emplace_back(
-                            std::pair<TNodeID, double>(buffer_vect[counter - 1]->first, time));
+                    temp.ID = buffer_vect[counter - 1]->first;
+                    temp.time = time;
+                    temp.speed = speed;
+                    buffer_vect[counter]->second.adjacent_node_vect.emplace_back(temp);
                 } else {
                     if (!counter) {
                         lat2 = buffer_vect[counter + 1]->second.cood.first;
                         lon2 = buffer_vect[counter + 1]->second.cood.second;
                         double time = HaversineDistance(lat1, lon1, lat2, lon2) / WALK_SPEED;
-
-                        buffer_vect[counter]->second.adjacent_node_vect.emplace_back(
-                                std::pair<TNodeID, double>(buffer_vect[counter + 1]->first, time));
+                        TImplementation temp;
+                        temp.ID = buffer_vect[counter + 1]->first;
+                        temp.time = time;
+                        temp.speed = speed;
+                        buffer_vect[counter]->second.adjacent_node_vect.emplace_back(temp);
                     } else {
                         lat2 = buffer_vect[counter - 1]->second.cood.first;
                         lon2 = buffer_vect[counter - 1]->second.cood.second;
                         double time = HaversineDistance(lat1, lon1, lat2, lon2) / WALK_SPEED;
-                        buffer_vect[counter]->second.adjacent_node_vect.emplace_back(
-                                std::pair<TNodeID, double>(buffer_vect[counter - 1]->first, time));
+                        TImplementation temp;
+                        temp.ID = buffer_vect[counter - 1]->first;
+                        temp.time = time;
+                        temp.speed = speed;
+                        buffer_vect[counter]->second.adjacent_node_vect.emplace_back(temp);
                     }
                 }
                 counter++;
             }
         }
-
-        if (bus_friend >= 1) {
-            counter = 0;
-            double dist = 0;
-            double lat1 = -1, lon1 = -1, lat2 = 0, lon2 = 0;
-            std::vector<std::unordered_map<TNodeID, SImplementation>::iterator> bus_buffer;
-            std::vector<double> distances;
-
-            for (auto const &element: buffer_vect) {
-                if (element->second.bus) {
-                    bus_buffer.emplace_back(element);
-                    if (dist == 0) {
-                        lat1 = element->second.cood.first;
-                        lon1 = element->second.cood.second;
-                    } else {
-                        distances.emplace_back(dist);
-                        dist = 0;
-                    }
-                } else {
-                    lat2 = element->second.cood.first;
-                    lon2 = element->second.cood.second;
-                    dist += HaversineDistance(lat1, lon1, lat2, lon2);
-                }
-            }
-            int i = 0;
-        }
         osm_in.ReadEntity(entity_in, true);
     }
 
+
+    CCSVReader stop_in(stops);
+    CCSVReader route_in(routes);
+    std::vector<std::string> row_vect;
+
+    stop_in.ReadRow(row_vect);
+    while (stop_in.ReadRow(row_vect)) {
+        stop_to_node_map[std::stoul(row_vect[0])] = std::stoul(row_vect[1]);
+    }
+
+    route_in.ReadRow(row_vect);
+    route_in.ReadRow(row_vect);
+    bool flag = true;
+    while (flag) {
+        std::vector<std::pair<TStopID, BImplementation>> buffer_row;
+        char line = row_vect[0][0];
+        while (row_vect[0][0] == line) {
+            auto iter = stop_to_node_map.find(std::stoul(row_vect[1]));
+            BImplementation temp;
+            temp.ID = iter->second;
+            temp.traverse_left_time = -1;
+            temp.traverse_right_time = -1;
+            davis_map.find(iter->second)->second.busline.emplace_back(std::make_pair(line, std::stoul(row_vect[1])));
+            buffer_row.emplace_back(std::make_pair(std::stoul(row_vect[1]), temp));
+            if (!route_in.ReadRow(row_vect)) {
+                flag = false;
+                break;
+            }
+        }
+        auto iter_post = ++buffer_row.begin();
+        for (auto iter_mid = buffer_row.begin(); iter_mid != buffer_row.end(); iter_mid++) {
+            std::vector<TNodeID> path;
+            TNodeID id1 = stop_to_node_map.find(iter_mid->first)->second,
+                    id2 = stop_to_node_map.find(iter_post->first)->second;
+            if (FindShortestPath(id1, id2, path) == 1)
+                iter_mid->second.traverse_right_time = PathToTime(path);
+            if (FindShortestPath(id2, id1, path) == 1)
+                iter_post->second.traverse_left_time = PathToTime(path);
+            iter_post++;
+            if (iter_post == buffer_row.end()) {
+                break;
+            }
+        }
+        complete_maniac[line] = buffer_row;
+    }
     return true;
 }
 
@@ -329,35 +360,28 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
     //Initializing a vector that keeps track of the closest node
     //Just incase of conflict, I will think of something that deal with this when that happens
     std::multimap<double, TNodeID> top_node_map;
-    //std::vector<double, TNodeID> top_node_map;
 
     //start the traversing iterator with src node
     auto traverse_iter = starting;
 
     while (traverse_node->first != dest) {
-        TNodeID temp = traverse_node->first;
         visited_map[traverse_node->first]; //List the node as visited
 
-        int gar = traverse_iter->first;
         for (auto const &neighbor: traverse_iter->second.adjacent_node_vect) {
-            auto adjacent_iter = dist_prev_map.find(neighbor.first);
-            double zero = traverse_node->second.second;
-            int jerry = traverse_node->first;
-            int shiny = neighbor.first;
-            double summer = neighbor.second;
-            double dist = neighbor.second + traverse_node->second.second;
-            if (visited_map.find(neighbor.first) != visited_map.end()) {
+            auto adjacent_iter = dist_prev_map.find(neighbor.ID);
+            double dist = neighbor.time + traverse_node->second.second;
+            if (visited_map.find(neighbor.ID) != visited_map.end()) {
                 continue;
             }
             if (adjacent_iter == dist_prev_map.end()) {
-                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.first));
+                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.ID));
                 TNodeDist = std::pair<TNodeID, double>(traverse_node->first, dist);
-                dist_prev_map.insert(std::pair<TNodeID, std::pair<TNodeID, double >>(neighbor.first, TNodeDist));
+                dist_prev_map.insert(std::pair<TNodeID, std::pair<TNodeID, double >>(neighbor.ID, TNodeDist));
             } else {
                 if (dist < adjacent_iter->second.second) {
                     adjacent_iter->second.second = dist;
                 }
-                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.first));
+                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.ID));
             }
         }
         if (!top_node_map.empty()) {
@@ -368,6 +392,8 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
         }
         //traverse the current node
         traverse_node = dist_prev_map.find(top_node_map.begin()->second);
+        if (traverse_node == dist_prev_map.end())
+            return -1;
         //int i = traverse_node->first;
         traverse_iter = davis_map.find(traverse_node->first);
     }
@@ -384,7 +410,83 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
 }
 
 double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathStep> &path) {
-    // Your code HERE
+    std::unordered_map<TNodeID, SImplementation>::iterator starting, ending;
+    starting = davis_map.find(src);
+    ending = davis_map.find(dest);
+
+    if (path.empty()) {
+        if (starting == davis_map.end() or ending == davis_map.end()) {
+            std::cout << "Invalid Input of src or dest for shortest" << std::endl;
+            return -1.0;
+        } else if (starting->second.adjacent_node_vect.empty() or ending == davis_map.end()) {
+            std::cout << "Starting Empty for shortest" << std::endl;
+            return -1.0;
+        }
+    }
+
+    //The matrix that stores previous node and distance from src
+    std::unordered_map<TNodeID, std::pair<TNodeID, double>> dist_prev_map;
+
+    //Initializing the first node
+    std::pair<TNodeID, double> TNodeDist = std::pair<TNodeID, double>(src, 0);
+    dist_prev_map.insert(std::pair<TNodeID, std::pair<TNodeID, double >>(src, TNodeDist));
+
+    //traverse_node is used to traverse
+    auto traverse_node = dist_prev_map.find(src);
+
+    //Initializing the visisted list
+    std::unordered_map<TNodeID, nullptr_t> visited_map;
+
+    //Initializing a vector that keeps track of the closest node
+    //Just incase of conflict, I will think of something that deal with this when that happens
+    std::multimap<double, TNodeID> top_node_map;
+
+    //start the traversing iterator with src node
+    auto traverse_iter = starting;
+
+    while (traverse_node->first != dest) {
+        visited_map[traverse_node->first]; //List the node as visited
+
+        for (auto const &neighbor: traverse_iter->second.adjacent_node_vect) {
+            auto adjacent_iter = dist_prev_map.find(neighbor.ID);
+            double dist = neighbor.time + traverse_node->second.second;
+            if (visited_map.find(neighbor.ID) != visited_map.end()) {
+                continue;
+            }
+            if (adjacent_iter == dist_prev_map.end()) {
+                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.ID));
+                TNodeDist = std::pair<TNodeID, double>(traverse_node->first, dist);
+                dist_prev_map.insert(std::pair<TNodeID, std::pair<TNodeID, double >>(neighbor.ID, TNodeDist));
+            } else {
+                if (dist < adjacent_iter->second.second) {
+                    adjacent_iter->second.second = dist;
+                }
+                top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.ID));
+            }
+        }
+        if (!top_node_map.empty()) {
+            while (visited_map.find(top_node_map.begin()->second) != visited_map.end()) {
+                auto it = top_node_map.find(top_node_map.begin()->first);
+                top_node_map.erase(it);
+            }
+        }
+        //traverse the current node
+        traverse_node = dist_prev_map.find(top_node_map.begin()->second);
+        if (traverse_node == dist_prev_map.end())
+            return -1;
+        //int i = traverse_node->first;
+        traverse_iter = davis_map.find(traverse_node->first);
+    }
+
+    //after the matrix is set, retrieve the data backwards and collect the vector
+    TNodeID loopback = dest;
+    while (loopback != src) {
+        auto temp = dist_prev_map.find(loopback);
+        path.insert(path.begin(), temp->first);
+        loopback = temp->second.first;
+    }
+    path.insert(path.begin(), src);
+    return 1;
 }
 
 

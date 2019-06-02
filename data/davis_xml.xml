@@ -19,8 +19,8 @@
 	</way>
 	<way id="12">
 		<nd ref="6"/>
-		<nd ref="5"/>
 		<nd ref="2"/>
+		<nd ref="5"/>
 		<nd ref="1"/>
 		<tag k="oneway" v="yes"/>
 		<tag k="highway" v="residential"/>
