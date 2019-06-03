@@ -69,10 +69,10 @@ int main(int argc, char *argv[]){
 
 int main() {
     CMapRouter route;
-    std::ifstream davis_osm("../data/davis_xml.xml");
-    std::ifstream stop_csv("../data/shortstop.csv");
-    std::ifstream routes_csv("../data/short.csv");
-    std::vector<CMapRouter::TNodeID> path_ID;
+    std::ifstream davis_osm("../data/davis.osm");
+    std::ifstream stop_csv("../data/stops.csv");
+    std::ifstream routes_csv("../data/routes.csv");
+    std::vector<CMapRouter::TPathStep> path_ID;
     std::vector<std::string> path_str;
     std::clock_t start;
     double duration;
@@ -88,13 +88,13 @@ int main() {
     duration = (load - start) / (double) CLOCKS_PER_SEC;
     std::cout << "Load Time: " << duration << '\n';
 
-    auto find_short = std::clock();
-    std::cout << "States: " << route.FindShortestPath(1, 6, path_ID) << std::endl;
-    route.GetShortDescription(path_ID, path_str);
-    duration = (find_short - load) / (double) CLOCKS_PER_SEC;
+    //auto find_short = std::clock();
+    std::cout << "States: " << route.FindFastestPath(95710209, 95710211, path_ID) << std::endl;
+    //route.GetShortDescription(path_ID, path_str);
+    //duration = (find_short - load) / (double) CLOCKS_PER_SEC;
 
-    for (auto element:path_str) {
-        std::cout << element << std::endl;
+    for (auto element:path_ID) {
+        std::cout << element.first << "  " << element.second << std::endl;
     }
     std::cout << "Find Short Time: " << duration << '\n';
 
