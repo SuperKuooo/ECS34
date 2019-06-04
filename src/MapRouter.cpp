@@ -17,7 +17,7 @@
 #define WALK_SPEED 3.0
 #define BUS_SPEED 25.0
 //Wait time in hours
-#define BUS_WAIT_TIME (0.008333333333)
+#define BUS_WAIT_TIME (30/3600.0)
 
 const CMapRouter::TNodeID CMapRouter::InvalidNodeID = -1;
 
@@ -121,7 +121,6 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
     while (osm_in.ReadEntity(entity_in, true)) {
         bool oneway = false;
         bool roundabout = false;
-        int bus_friend = 0;
         int speed = -1;
         std::vector<std::unordered_map<TNodeID, SImplementation>::iterator> buffer_vect;
         std::vector<std::pair<std::string, std::string>> way_tags;
@@ -270,10 +269,9 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
             }
         }
 
-        if (buffer_row.front().first == buffer_row.back().first) {
-            buffer_row.pop_back();
-        } else
-            buffer_row.emplace_back(buffer_row.front());
+        if (buffer_row.front().first != buffer_row.back().first) {
+            buffer_row.emplace_back(std::pair<TNodeID, BImplementation>(0, BImplementation()));
+        }
 
 
         auto iter_post = ++buffer_row.begin();
@@ -286,7 +284,7 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
             if (FindShortestPath(id2, id1, path) == 1)
                 iter_post->second.traverse_left_time = PathToTime(path);
             iter_post++;
-            if (iter_post == buffer_row.end()) {
+            if (iter_post == buffer_row.end() or !iter_post->first) {
                 break;
             }
         }
@@ -475,7 +473,7 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
             if (!counter) {
                 if (visited_map.find(vect[1].second.ID) == visited_map.end()) {
                     auto adjacent_iter = dist_prev_map.find(vect[1].second.ID);
-                    double time = vect[1].second.traverse_right_time + traverse_node->second.second;
+                    double time = vect[0].second.traverse_right_time + traverse_node->second.second;
                     TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
                     if (adjacent_iter == dist_prev_map.end()) {
                         dist_prev_map.insert(std::make_pair(vect[1].second.ID, TNodeDist));
@@ -487,22 +485,22 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
                         top_node_map.insert(std::pair<double, TNodeID>(time, vect[1].second.ID));
                     }
                 }
-                if (visited_map.find(vect[length].second.ID) == visited_map.end()) {
-                    auto adjacent_iter = dist_prev_map.find(vect[length].second.ID);
-                    double time = vect[length].second.traverse_left_time + traverse_node->second.second;
-                    TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
-                    if (adjacent_iter == dist_prev_map.end()) {
-                        dist_prev_map.insert(std::make_pair(vect[length].second.ID, TNodeDist));
-                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[length].second.ID));
-                    } else {
-                        if (time < adjacent_iter->second.second) {
-                            adjacent_iter->second = TNodeDist;
-                        }
-                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[length].second.ID));
-                    }
-                }
-            } else if (counter == length) {
-                if (visited_map.find(vect[0].second.ID) == visited_map.end()) {
+//                if (vect[length].first and visited_map.find(vect[length - 1].second.ID) == visited_map.end()) {
+//                    auto adjacent_iter = dist_prev_map.find(vect[length].second.ID);
+//                    double time = vect[length].second.traverse_left_time + traverse_node->second.second;
+//                    TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
+//                    if (adjacent_iter == dist_prev_map.end()) {
+//                        dist_prev_map.insert(std::make_pair(vect[length].second.ID, TNodeDist));
+//                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[length].second.ID));
+//                    } else {
+//                        if (time < adjacent_iter->second.second) {
+//                            adjacent_iter->second = TNodeDist;
+//                        }
+//                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[length].second.ID));
+//                    }
+//                }
+            } else if (counter == length - 1) {
+                if (vect[length].second.ID and visited_map.find(vect[0].second.ID) == visited_map.end()) {
                     auto adjacent_iter = dist_prev_map.find(vect[0].second.ID);
                     double time = vect[0].second.traverse_right_time + traverse_node->second.second;
                     TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
@@ -516,24 +514,24 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
                         top_node_map.insert(std::pair<double, TNodeID>(time, vect[0].second.ID));
                     }
                 }
-                if (visited_map.find(vect[length - 1].second.ID) == visited_map.end()) {
-                    auto adjacent_iter = dist_prev_map.find(vect[length - 1].second.ID);
-                    double time = vect[length - 1].second.traverse_left_time + traverse_node->second.second;
-                    TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
-                    if (adjacent_iter == dist_prev_map.end()) {
-                        dist_prev_map.insert(std::make_pair(vect[length - 1].second.ID, TNodeDist));
-                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[length - 1].second.ID));
-                    } else {
-                        if (time < adjacent_iter->second.second) {
-                            adjacent_iter->second = TNodeDist;
-                        }
-                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[length - 1].second.ID));
-                    }
-                }
+//                if (visited_map.find(vect[length - 2].second.ID) == visited_map.end()) {
+//                    auto adjacent_iter = dist_prev_map.find(vect[length - 2].second.ID);
+//                    double time = vect[length - 1].second.traverse_left_time + traverse_node->second.second;
+//                    TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
+//                    if (adjacent_iter == dist_prev_map.end()) {
+//                        dist_prev_map.insert(std::make_pair(vect[length - 2].second.ID, TNodeDist));
+//                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[length - 1].second.ID));
+//                    } else {
+//                        if (time < adjacent_iter->second.second) {
+//                            adjacent_iter->second = TNodeDist;
+//                        }
+//                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[length - 1].second.ID));
+//                    }
+//                }
             } else {
                 if (visited_map.find(vect[counter + 1].second.ID) == visited_map.end()) {
                     auto adjacent_iter = dist_prev_map.find(vect[counter + 1].second.ID);
-                    double time = vect[counter + 1].second.traverse_right_time + traverse_node->second.second;
+                    double time = vect[counter].second.traverse_right_time + traverse_node->second.second;
                     TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
                     if (adjacent_iter == dist_prev_map.end()) {
                         dist_prev_map.insert(std::make_pair(vect[counter + 1].second.ID, TNodeDist));
@@ -545,20 +543,20 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
                         top_node_map.insert(std::pair<double, TNodeID>(time, vect[counter + 1].second.ID));
                     }
                 }
-                if (visited_map.find(vect[counter - 1].second.ID) == visited_map.end()) {
-                    auto adjacent_iter = dist_prev_map.find(vect[counter - 1].second.ID);
-                    double time = vect[counter - 1].second.traverse_left_time + traverse_node->second.second;
-                    TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
-                    if (adjacent_iter == dist_prev_map.end()) {
-                        dist_prev_map.insert(std::make_pair(vect[counter - 1].second.ID, TNodeDist));
-                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[counter - 1].second.ID));
-                    } else {
-                        if (time < adjacent_iter->second.second) {
-                            adjacent_iter->second = TNodeDist;
-                        }
-                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[counter - 1].second.ID));
-                    }
-                }
+//                if (visited_map.find(vect[counter - 1].second.ID) == visited_map.end()) {
+//                    auto adjacent_iter = dist_prev_map.find(vect[counter - 1].second.ID);
+//                    double time = vect[counter].second.traverse_left_time + traverse_node->second.second;
+//                    TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
+//                    if (adjacent_iter == dist_prev_map.end()) {
+//                        dist_prev_map.insert(std::make_pair(vect[counter - 1].second.ID, TNodeDist));
+//                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[counter - 1].second.ID));
+//                    } else {
+//                        if (time < adjacent_iter->second.second) {
+//                            adjacent_iter->second = TNodeDist;
+//                        }
+//                        top_node_map.insert(std::pair<double, TNodeID>(time, vect[counter - 1].second.ID));
+//                    }
+//                }
             }
         }
         for (auto const &neighbor: traverse_iter->second.adjacent_node_vect) {
@@ -591,14 +589,17 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
 
     //after the matrix is set, retrieve the data backwards and collect the vector
     TNodeID loopback = dest;
+    auto temp = dist_prev_map.find(loopback);
+    double time = temp->second.second;
+    //std::unordered_map<TNodeID, std::pair<TPathStep, double>> dist_prev_map;
     while (loopback != src) {
-        auto temp = dist_prev_map.find(loopback);
         TPathStep dumb = std::pair<std::string, TNodeID>(temp->second.first.first, loopback);
         path.insert(path.begin(), dumb);
         loopback = temp->second.first.second;
+        temp = dist_prev_map.find(loopback);
     }
     path.insert(path.begin(), std::make_pair("Walk", src));
-    return 1;
+    return time;
 }
 
 

@@ -15,7 +15,7 @@ class CMapRouter{
         using TLocation = std::pair<double, double>; //lat then lon
         using TPathStep = std::pair<std::string, TNodeID>;
         using BImplementation = struct{
-            TNodeID ID = -1;
+            TNodeID ID = 0;
             //from 1 to 2, 2 to 3, 3 to 4 etc..
             double traverse_right_time = -1;
 

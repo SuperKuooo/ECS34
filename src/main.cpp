@@ -146,7 +146,13 @@ int main() {
     std::cout << "Load Time: " << duration << '\n';
 
     //auto find_short = std::clock();
-    std::cout << "States: " << route.FindFastestPath(95710209, 95710211, path_ID) << std::endl;
+    double temp = route.FindFastestPath(265024841, 4399280681, path_ID);
+    int hour = int(temp);
+    double min = (temp - hour) * 60.0;
+    double sec = (min - int(min)) * 60;
+
+    std::cout << hour << "hr " << int(min) << "min " << sec << "sec" << std::endl;
+
     //route.GetShortDescription(path_ID, path_str);
     //duration = (find_short - load) / (double) CLOCKS_PER_SEC;
 
