@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "../include/MapRouter.h"
+#include "MapRouter.h"
 #include <sstream>
 
 const char OSMFileData [] = "<?xml version='1.0' encoding='UTF-8'?>\n"
@@ -20,7 +20,6 @@ const char OSMFileData [] = "<?xml version='1.0' encoding='UTF-8'?>\n"
                             "        <tag k=\"oneway\" v=\"yes\"/>\n"
                             "        <tag k=\"highway\" v=\"residential\"/>\n"
                             "        <tag k=\"name\" v=\"Main Street\"/>\n"
-                            "        <tag k=\"junction\" v=\"roundabout\"/>\n"
                             "    </way>\n"
                             "    <way id=\"12\">\n"
                             "        <nd ref=\"6\"/>\n"
@@ -30,10 +29,9 @@ const char OSMFileData [] = "<?xml version='1.0' encoding='UTF-8'?>\n"
                             "        <tag k=\"oneway\" v=\"yes\"/>\n"
                             "        <tag k=\"highway\" v=\"residential\"/>\n"
                             "        <tag k=\"name\" v=\"Back Street\"/>\n"
-                            "        <tag k=\"maxspeed\" v=\"100 mph\"/>\n"
                             "    </way>\n"
                             "    <way id=\"13\">\n"
-                            "        <nd ref=\"4\"/>\n"
+                            "        <nd ref=\"5\"/>\n"
                             "        <nd ref=\"3\"/>\n"
                             "        <tag k=\"oneway\" v=\"yes\"/>\n"
                             "        <tag k=\"highway\" v=\"residential\"/>\n"
@@ -132,14 +130,19 @@ TEST(MapRouter,FastestPathTest){
     if(6 == Path.size()){
         EXPECT_EQ(std::get<0>(Path[0]), "Walk");
         EXPECT_EQ(std::get<1>(Path[0]), 1);
+
         EXPECT_EQ(std::get<0>(Path[1]), "Walk");
         EXPECT_EQ(std::get<1>(Path[1]), 2);
+
         EXPECT_EQ(std::get<0>(Path[2]), "Bus A");
         EXPECT_EQ(std::get<1>(Path[2]), 3);
+
         EXPECT_EQ(std::get<0>(Path[3]), "Bus A");
         EXPECT_EQ(std::get<1>(Path[3]), 4);
+
         EXPECT_EQ(std::get<0>(Path[4]), "Bus A");
         EXPECT_EQ(std::get<1>(Path[4]), 5);
+
         EXPECT_EQ(std::get<0>(Path[5]), "Walk");
         EXPECT_EQ(std::get<1>(Path[5]), 6);
     }
