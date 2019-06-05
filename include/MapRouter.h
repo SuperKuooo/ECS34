@@ -38,6 +38,7 @@ class CMapRouter{
 
     private:
         std::map<TNodeID, TLocation> cheating_LOL;
+        std::unordered_map<TStopID, void*> cheating_busline;
         // Can add another map so you don't have to traverse the vector to find the StopID
         std::unordered_map<char, std::vector<std::pair<TStopID, BImplementation>>> complete_maniac;
         std::unordered_map<TStopID, TNodeID> stop_to_node_map;

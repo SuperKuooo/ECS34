@@ -287,6 +287,7 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
                 break;
             }
         }
+        cheating_busline[line];
         complete_maniac[line] = buffer_row;
     }
     return true;
@@ -324,19 +325,36 @@ CMapRouter::TLocation CMapRouter::GetNodeLocationByID(TNodeID nodeid) const {
 }
 
 CMapRouter::TNodeID CMapRouter::GetNodeIDByStopID(TStopID stopid) const {
+    auto iter = stop_to_node_map.find(stopid);
+    if (iter == stop_to_node_map.end()) {
+        return InvalidNodeID;
+    } else {
+        return iter->first;
+    }
 }
 
 size_t CMapRouter::RouteCount() const {
-    // Your code HERE
+    return cheating_busline.size();
 }
 
 std::string CMapRouter::GetSortedRouteNameByIndex(size_t index) const {
-    // Your code HERE
+    auto iter = cheating_busline.begin();
+    for (int i = 0; i < index; i++) {
+        iter++;
+    }
+    return std::string(1, iter->first);
 }
 
 bool CMapRouter::GetRouteStopsByRouteName(const std::string &route, std::vector<TStopID> &stops) {
-
-
+    auto bus_line = complete_maniac.find(route[0]);
+    if (bus_line == complete_maniac.end()) {
+        return false;
+    } else {
+        for (auto elements: bus_line->second) {
+            stops.push_back(elements.first);
+        }
+        return true;
+    }
 }
 
 double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNodeID> &path) {
@@ -606,14 +624,20 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
 
 bool
 CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, std::vector<std::string> &desc) const {
-    int length = path.size() - 2;
+    int length = path.size() - 1;
 
     for (int i = 0; i <= length; i++) {
         std::stringstream print;
         int degrees;
+        int j = i;
         double minutes, seconds;
+
+        if(i != length){
+            j++;
+        }
         auto dir1 = davis_map.find(path[i]);
-        auto dir2 = davis_map.find(path[i + 1]);
+        auto dir2 = davis_map.find(path[j]);
+
         double angle = CalculateBearing(dir1->second.cood.first, dir1->second.cood.second,
                                         dir2->second.cood.first, dir2->second.cood.second);
 
@@ -652,7 +676,6 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
                 print << "NW";
                 break;
         }
-
         degrees = int(dir1->second.cood.first);
         minutes = (dir1->second.cood.first - degrees) * 60;
         seconds = (minutes - int(minutes)) * 60;
@@ -671,7 +694,68 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
 
 
 bool CMapRouter::GetPathDescription(const std::vector<TPathStep> &path, std::vector<std::string> &desc) const {
-    // Your code HERE
+
+    int length = path.size() - 2;
+
+//    for (int i = 0; i <= length; i++) {
+//        std::stringstream print;
+//        int degrees;
+//        double minutes, seconds;
+//        auto dir1 = davis_map.find(path[i]);
+//        auto dir2 = davis_map.find(path[i + 1]);
+//        double angle = CalculateBearing(dir1->second.cood.first, dir1->second.cood.second,
+//                                        dir2->second.cood.first, dir2->second.cood.second);
+//
+//        angle /= 22.5;
+//        switch (int(angle)) {
+//            case 0:
+//            case 15:
+//                print << "N";
+//                break;
+//            case 1:
+//            case 2:
+//                print << "NE";
+//                break;
+//            case 3:
+//            case 4:
+//                print << "E";
+//                break;
+//            case 5:
+//            case 6:
+//                print << "SE";
+//                break;
+//            case 7:
+//            case 8:
+//                print << "S";
+//                break;
+//            case 9:
+//            case 10:
+//                print << "SW";
+//                break;
+//            case 11:
+//            case 12:
+//                print << "W";
+//                break;
+//            case 13:
+//            case 14:
+//                print << "NW";
+//                break;
+//        }
+//        degrees = int(dir1->second.cood.first);
+//        minutes = (dir1->second.cood.first - degrees) * 60;
+//        seconds = (minutes - int(minutes)) * 60;
+//        print << degrees << "d " << int(minutes) << "' ";
+//        print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
+//
+//        degrees = int(dir1->second.cood.second);
+//        minutes = (dir1->second.cood.second - degrees) * 60;
+//        seconds = (minutes - int(minutes)) * 60;
+//        print << degrees << "d " << int(minutes) << "' ";
+//        print << std::fixed << std::setprecision(2) << seconds << "\" E";
+//
+//        desc.push_back(print.str());
+//    }
+
 }
 
 
