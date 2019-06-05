@@ -364,11 +364,11 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
 
     if (path.empty()) {
         if (starting == davis_map.end() or ending == davis_map.end()) {
-            std::cout << "Invalid Input of src or dest for shortest" << std::endl;
-            return -1.0;
+            //std::cout << "Invalid Input of src or dest for shortest" << std::endl;
+            return std::numeric_limits<double>::max();
         } else if (starting->second.adjacent_node_vect.empty() or ending == davis_map.end()) {
-            std::cout << "Starting Empty for shortest" << std::endl;
-            return -1.0;
+            //std::cout << "Starting Empty for shortest" << std::endl;
+            return std::numeric_limits<double>::max();
         }
     }
 
@@ -421,7 +421,7 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
         //traverse the current node
         traverse_node = dist_prev_map.find(top_node_map.begin()->second);
         if (traverse_node == dist_prev_map.end())
-            return -1;
+            return std::numeric_limits<double>::max();
         //int i = traverse_node->first;
         traverse_iter = davis_map.find(traverse_node->first);
     }
@@ -446,11 +446,11 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
 
     if (path.empty()) {
         if (starting == davis_map.end() or ending == davis_map.end()) {
-            std::cout << "Invalid Input of src or dest for fastest" << std::endl;
-            return -1.0;
+            //std::cout << "Invalid Input of src or dest for fastest" << std::endl;
+            return std::numeric_limits<double>::max();
         } else if (starting->second.adjacent_node_vect.empty() or ending->second.adjacent_node_vect.empty()) {
-            std::cout << "This node is empty" << std::endl;
-            return -1.0;
+            //std::cout << "This node is empty" << std::endl;
+            return std::numeric_limits<double>::max();
         }
     }
 
@@ -602,7 +602,7 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
         //traverse the current node
         traverse_node = dist_prev_map.find(top_node_map.begin()->second);
         if (traverse_node == dist_prev_map.end())
-            return -1;
+            return std::numeric_limits<double>::max();
         traverse_iter = davis_map.find(traverse_node->first);
     }
 
