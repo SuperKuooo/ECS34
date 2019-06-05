@@ -21,6 +21,7 @@
 #include <fstream>
 #include <ctime>
 #include <limits>
+#include <iomanip>
 
 
 int main(int argc, char *argv[]){
@@ -87,11 +88,20 @@ int main(int argc, char *argv[]){
             try {
                 size_t param1 = std::stoi(split_command[1]);
                 size_t param2 = std::stoi(split_command[2]);
-                double res = route.FindFastestPath(param1, param2, FastestPath);
-                if (res == std::numeric_limits<double>::max()){
+                double temp = route.FindFastestPath(param1, param2, FastestPath);
+                int hour = int(temp);
+                double min = (temp - hour) * 60.0;
+                double sec = (min - int(min)) * 60.0;
+                if (temp == std::numeric_limits<double>::max()){
                     std::cout << "Unable to find fastest path from " << param1 << " to " << param2 << std::endl;
                 } else {
-                    std::cout << "Fastest path takes " << res << std::endl;
+                    if (hour == 0) {
+                        std::cout << "Fastest path takes " << int(min) << "min " << std::fixed
+                                  << std::setprecision(1) << sec << "sec" << std::endl;
+                    } else {
+                        std::cout << "Fastest path takes " << hour << "hr " << int(min) << "min " << std::fixed
+                                  << std::setprecision(1) << sec << "sec" << std::endl;
+                    }
                 }
             } catch (std::exception &Ex) {
                 NoException = false;

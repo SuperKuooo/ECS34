@@ -301,7 +301,7 @@ size_t CMapRouter::NodeCount() const {
 
 CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
     auto iter = cheating_LOL.begin();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < index; i++) {
         iter++;
     }
     return iter->first;
@@ -310,7 +310,7 @@ CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
 CMapRouter::TLocation CMapRouter::GetSortedNodeLocationByIndex(size_t index) const {
     //need to add error handling
     auto iter = cheating_LOL.begin();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < index; i++) {
         iter++;
     }
     return iter->second;
@@ -347,11 +347,11 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
 
     if (path.empty()) {
         if (starting == davis_map.end() or ending == davis_map.end()) {
-            std::cout << "Invalid Input of src or dest for shortest" << std::endl;
-            return -1.0;
+            //std::cout << "Invalid Input of src or dest for shortest" << std::endl;
+            return std::numeric_limits<double>::max();
         } else if (starting->second.adjacent_node_vect.empty() or ending == davis_map.end()) {
-            std::cout << "Starting Empty for shortest" << std::endl;
-            return -1.0;
+            //std::cout << "Starting Empty for shortest" << std::endl;
+            return std::numeric_limits<double>::max();
         }
     }
 
@@ -404,7 +404,7 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
         //traverse the current node
         traverse_node = dist_prev_map.find(top_node_map.begin()->second);
         if (traverse_node == dist_prev_map.end())
-            return -1;
+            return std::numeric_limits<double>::max();
         //int i = traverse_node->first;
         traverse_iter = davis_map.find(traverse_node->first);
     }
@@ -427,11 +427,11 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
 
     if (path.empty()) {
         if (starting == davis_map.end() or ending == davis_map.end()) {
-            std::cout << "Invalid Input of src or dest for fastest" << std::endl;
-            return -1.0;
+            //std::cout << "Invalid Input of src or dest for fastest" << std::endl;
+            return std::numeric_limits<double>::max();
         } else if (starting->second.adjacent_node_vect.empty() or ending->second.adjacent_node_vect.empty()) {
-            std::cout << "This node is empty" << std::endl;
-            return -1.0;
+            //std::cout << "This node is empty" << std::endl;
+            return std::numeric_limits<double>::max();
         }
     }
 
@@ -583,7 +583,7 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
         //traverse the current node
         traverse_node = dist_prev_map.find(top_node_map.begin()->second);
         if (traverse_node == dist_prev_map.end())
-            return -1;
+            return std::numeric_limits<double>::max();
         traverse_iter = davis_map.find(traverse_node->first);
     }
 
