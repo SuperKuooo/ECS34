@@ -28,10 +28,12 @@ int main(int argc, char *argv[]){
     std::string command;
     std::vector<std::string> split_command;
     bool done = false;
+    bool short_fast = false;
     bool NoException = true;
     CMapRouter route;
     std::vector<CMapRouter::TNodeID> ShortestPath;
     std::vector<CMapRouter::TPathStep> FastestPath;
+    std::vector<std::string> description;
     std::ifstream davis_osm("../data/davis.osm");
     std::ifstream stop_csv("../data/stops.csv");
     std::ifstream routes_csv("../data/routes.csv");
@@ -85,6 +87,7 @@ int main(int argc, char *argv[]){
                 std::cout << "Invalid node parameter, see help." << std::endl;
             }
         } else if (split_command[0] == "fastest"){
+            short_fast = true;
             try {
                 size_t param1 = std::stoi(split_command[1]);
                 size_t param2 = std::stoi(split_command[2]);
@@ -108,6 +111,7 @@ int main(int argc, char *argv[]){
                 std::cout << "Invalid fastest command, see help." << std::endl;
             }
         } else if (split_command[0] == "shortest"){
+            short_fast = false;
             try {
                 size_t param1 = std::stoi(split_command[1]);
                 size_t param2 = std::stoi(split_command[2]);
@@ -115,7 +119,7 @@ int main(int argc, char *argv[]){
                 if (res == std::numeric_limits<double>::max()){
                     std::cout << "Unable to find shortest path from " << param1 << " to " << param2 << std::endl;
                 } else {
-                    std::cout << "Shortest path is " << res << std::endl;
+                    std::cout << "Shortest path is " << std::fixed << std::setprecision(2) << res << "mi" << std::endl;
                 }
             } catch (std::exception &Ex) {
                 NoException = false;
@@ -125,7 +129,15 @@ int main(int argc, char *argv[]){
             std::ofstream out("Saved_Path");
 
         } else if (split_command[0] == "print"){
-
+            if (short_fast){
+                //Getpath
+            } else {
+                route.GetShortDescription(ShortestPath, description);
+                for (auto elem:description) {
+                    std::cout << elem << std::endl;
+                }
+            }
+            description.clear();
         } else {
             std::cout << "Unknown command " << command << " type help for help." << std::endl;
         }

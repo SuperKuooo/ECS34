@@ -436,7 +436,7 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
         temp = dist_prev_map.find(loopback);
     }
     path.insert(path.begin(), src);
-    return dist;
+    return dist * WALK_SPEED;
 }
 
 double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathStep> &path) {
@@ -642,51 +642,65 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
                                         dir2->second.cood.first, dir2->second.cood.second);
 
         angle /= 22.5;
+        if(angle < 0){
+            angle *= -1;
+        }
         switch (int(angle)) {
             case 0:
             case 15:
-                print << "N";
+                print << "Walk N";
                 break;
             case 1:
             case 2:
-                print << "NE";
+                print << "Walk NE";
                 break;
             case 3:
             case 4:
-                print << "E";
+                print << "Walk E";
                 break;
             case 5:
             case 6:
-                print << "SE";
+                print << "Walk SE";
                 break;
             case 7:
             case 8:
-                print << "S";
+                print << "Walk S";
                 break;
             case 9:
             case 10:
-                print << "SW";
+                print << "Walk SW";
                 break;
             case 11:
             case 12:
-                print << "W";
+                print << "Walk W";
                 break;
             case 13:
             case 14:
-                print << "NW";
+                print << "Walk NW";
+                break;
+            default:
+                std::cout<<angle<<std::endl;
+                std::cout<< "Error Angle"<<std::endl;
                 break;
         }
-        degrees = int(dir1->second.cood.first);
-        minutes = (dir1->second.cood.first - degrees) * 60;
+        print<<" to ";
+        auto temp = dir1->second.cood.first;
+        if(temp<0)
+            temp *=-1;
+        degrees = int(temp);
+        minutes = (temp - degrees) * 60;
         seconds = (minutes - int(minutes)) * 60;
         print << degrees << "d " << int(minutes) << "' ";
         print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
 
-        degrees = int(dir1->second.cood.second);
-        minutes = (dir1->second.cood.second - degrees) * 60;
+        temp = dir1->second.cood.second;
+        if(temp<0)
+            temp *=-1;
+        degrees = int(temp);
+        minutes = (temp - degrees) * 60;
         seconds = (minutes - int(minutes)) * 60;
         print << degrees << "d " << int(minutes) << "' ";
-        print << std::fixed << std::setprecision(2) << seconds << "\" E";
+        print << std::fixed << std::setprecision(3) << seconds << "\" E";
 
         desc.push_back(print.str());
     }
