@@ -22,7 +22,7 @@
 #include <ctime>
 #include <limits>
 
-/*
+
 int main(int argc, char *argv[]){
     std::string command;
     std::vector<std::string> split_command;
@@ -121,9 +121,9 @@ int main(int argc, char *argv[]){
         }
     }
     return EXIT_SUCCESS;
-} */
+}
 
-
+/*
 int main() {
     CMapRouter route;
     std::ifstream davis_osm("../data/davis_xml.xml");
@@ -156,4 +156,4 @@ int main() {
     std::cout << "Find Short Time: " << duration << '\n';
 
     return EXIT_SUCCESS;
-}
+}*/
