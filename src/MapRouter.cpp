@@ -112,7 +112,7 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
         counter++;
     } while (entity_in.DNameData != "way");
 
-    if (counter != davis_map.size()) {
+    if (size_t(counter) != davis_map.size()) {
         std::cout << "Error: Losing values in hashtable" << std::endl;
     }
 
@@ -278,9 +278,9 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
             std::vector<TNodeID> path;
             TNodeID id1 = stop_to_node_map.find(iter_mid->first)->second,
                     id2 = stop_to_node_map.find(iter_post->first)->second;
-            if (FindShortestPath(id1, id2, path) == 1)
+            if (FindShortestPath(id1, id2, path))
                 iter_mid->second.traverse_right_time = PathToTime(path);
-            if (FindShortestPath(id2, id1, path) == 1)
+            if (FindShortestPath(id2, id1, path))
                 iter_post->second.traverse_left_time = PathToTime(path);
             iter_post++;
             if (iter_post == buffer_row.end() or !iter_post->first) {
@@ -301,7 +301,7 @@ size_t CMapRouter::NodeCount() const {
 
 CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
     auto iter = cheating_LOL.begin();
-    for (int i = 0; i < index; i++) {
+    for (size_t i = 0; i < index; i++) {
         iter++;
     }
     return iter->first;
@@ -310,7 +310,10 @@ CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
 CMapRouter::TLocation CMapRouter::GetSortedNodeLocationByIndex(size_t index) const {
     //need to add error handling
     auto iter = cheating_LOL.begin();
-    for (int i = 0; i < index; i++) {
+    if (index > cheating_LOL.size() - 1) {
+        return std::make_pair(180.0, 360.0);
+    }
+    for (size_t i = 0; i < index; i++) {
         iter++;
     }
     return iter->second;
@@ -329,7 +332,7 @@ CMapRouter::TNodeID CMapRouter::GetNodeIDByStopID(TStopID stopid) const {
     if (iter == stop_to_node_map.end()) {
         return InvalidNodeID;
     } else {
-        return iter->first;
+        return iter->second;
     }
 }
 
@@ -339,7 +342,7 @@ size_t CMapRouter::RouteCount() const {
 
 std::string CMapRouter::GetSortedRouteNameByIndex(size_t index) const {
     auto iter = cheating_busline.begin();
-    for (int i = 0; i < index; i++) {
+    for (size_t i = 0; i < index; i++) {
         iter++;
     }
     return std::string(1, iter->first);
@@ -350,8 +353,14 @@ bool CMapRouter::GetRouteStopsByRouteName(const std::string &route, std::vector<
     if (bus_line == complete_maniac.end()) {
         return false;
     } else {
+        size_t i = 0;
+        size_t length = bus_line->second.size() - 2;
         for (auto elements: bus_line->second) {
             stops.push_back(elements.first);
+            if (i == length) {
+                break;
+            }
+            i++;
         }
         return true;
     }
@@ -475,7 +484,6 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
     auto traverse_iter = starting;
 
     while (traverse_node->first != dest) {
-        int i = traverse_node->first;
         visited_map[traverse_node->first]; //Add to the visited node
         for (auto const &neighbor:traverse_iter->second.busline) {
             auto vect = complete_maniac.find(neighbor.first)->second;
@@ -632,7 +640,7 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
         int j = i;
         double minutes, seconds;
 
-        if(i != length){
+        if (i != length) {
             j++;
         }
         auto dir1 = davis_map.find(path[i]);
@@ -642,7 +650,7 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
                                         dir2->second.cood.first, dir2->second.cood.second);
 
         angle /= 22.5;
-        if(angle < 0){
+        if (angle < 0) {
             angle *= -1;
         }
         switch (int(angle)) {
@@ -679,14 +687,14 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
                 print << "Walk NW";
                 break;
             default:
-                std::cout<<angle<<std::endl;
-                std::cout<< "Error Angle"<<std::endl;
+                std::cout << angle << std::endl;
+                std::cout << "Error Angle" << std::endl;
                 break;
         }
-        print<<" to ";
+        print << " to ";
         auto temp = dir1->second.cood.first;
-        if(temp<0)
-            temp *=-1;
+        if (temp < 0)
+            temp *= -1;
         degrees = int(temp);
         minutes = (temp - degrees) * 60;
         seconds = (minutes - int(minutes)) * 60;
@@ -694,8 +702,8 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
         print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
 
         temp = dir1->second.cood.second;
-        if(temp<0)
-            temp *=-1;
+        if (temp < 0)
+            temp *= -1;
         degrees = int(temp);
         minutes = (temp - degrees) * 60;
         seconds = (minutes - int(minutes)) * 60;
@@ -704,12 +712,13 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
 
         desc.push_back(print.str());
     }
+    return true;
 }
 
 
 bool CMapRouter::GetPathDescription(const std::vector<TPathStep> &path, std::vector<std::string> &desc) const {
 
-    int length = path.size() - 2;
+//    int length = path.size() - 2;
 
 //    for (int i = 0; i <= length; i++) {
 //        std::stringstream print;
@@ -769,7 +778,7 @@ bool CMapRouter::GetPathDescription(const std::vector<TPathStep> &path, std::vec
 //
 //        desc.push_back(print.str());
 //    }
-
+    return true;
 }
 
 

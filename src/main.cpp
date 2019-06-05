@@ -23,7 +23,7 @@
 #include <limits>
 #include <iomanip>
 
-
+/*
 int main(int argc, char *argv[]){
     std::string command;
     std::vector<std::string> split_command;
@@ -143,14 +143,14 @@ int main(int argc, char *argv[]){
         }
     }
     return EXIT_SUCCESS;
-}
+}*/
 
-/*
+
 int main() {
     CMapRouter route;
-    std::ifstream davis_osm("../data/davis.osm");
-    std::ifstream stop_csv("../data/stops.csv");
-    std::ifstream routes_csv("../data/routes.csv");
+    std::ifstream davis_osm("../data/davis_xml.xml");
+    std::ifstream stop_csv("../data/shortstop.csv");
+    std::ifstream routes_csv("../data/short.csv");
     std::vector<CMapRouter::TPathStep> path_ID;
     std::vector<std::string> path_str;
 
@@ -160,8 +160,7 @@ int main() {
         std::cout << "Finished Load" << std::endl;
 
     //auto find_short = std::clock();
-    //double temp = route.FindFastestPath(265024841, 4399280681, path_ID);
-    double temp;
+    double temp = route.FindFastestPath(1, 6, path_ID);
     int hour = int(temp);
     double min = (temp - hour) * 60.0;
     double sec = (min - int(min)) * 60;
@@ -172,5 +171,7 @@ int main() {
         std::cout << element.first << "  " << element.second << std::endl;
     }
 
+    std::cout << route.GetNodeIDByStopID(20);
+
     return EXIT_SUCCESS;
-}*/
+}
