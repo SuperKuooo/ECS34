@@ -1,14 +1,3 @@
-//
-// Created by superkuo on 5/27/19.
-//
-
-
-/*Questions
- * 1. Where to put SImplementation
- * 2. Incomplete deceleration
- * 3.
- *
- */
 #include <CSVReader.h>
 #include <XMLEntity.h>
 #include <XMLReader.h>
@@ -28,7 +17,7 @@ int main(int argc, char *argv[]){
     std::string command;
     std::vector<std::string> split_command;
     bool done = false;
-    bool short_fast = false;
+    bool shortOrfast;
     bool NoException = true;
     CMapRouter route;
     std::vector<CMapRouter::TNodeID> ShortestPath;
@@ -87,7 +76,7 @@ int main(int argc, char *argv[]){
                 std::cout << "Invalid node parameter, see help." << std::endl;
             }
         } else if (split_command[0] == "fastest"){
-            short_fast = true;
+            shortOrfast = true;
             try {
                 size_t param1 = std::stoi(split_command[1]);
                 size_t param2 = std::stoi(split_command[2]);
@@ -111,7 +100,7 @@ int main(int argc, char *argv[]){
                 std::cout << "Invalid fastest command, see help." << std::endl;
             }
         } else if (split_command[0] == "shortest"){
-            short_fast = false;
+            shortOrfast = false;
             try {
                 size_t param1 = std::stoi(split_command[1]);
                 size_t param2 = std::stoi(split_command[2]);
@@ -127,13 +116,17 @@ int main(int argc, char *argv[]){
             }
         } else if (split_command[0] == "save"){
             std::ofstream out("Saved_Path");
+            //"Failed to save path."
 
         } else if (split_command[0] == "print"){
-            if (short_fast){
-                //Getpath
+            if (shortOrfast){
+                route.GetPathDescription(FastestPath, description);
+                for (auto &elem:description){
+                    std::cout << elem << std::endl;
+                }
             } else {
                 route.GetShortDescription(ShortestPath, description);
-                for (auto elem:description) {
+                for (auto &elem:description) {
                     std::cout << elem << std::endl;
                 }
             }
