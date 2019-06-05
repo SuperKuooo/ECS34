@@ -131,35 +131,24 @@ int main() {
     std::ifstream routes_csv("../data/routes.csv");
     std::vector<CMapRouter::TPathStep> path_ID;
     std::vector<std::string> path_str;
-    std::clock_t start;
-    double duration;
-
-    start = std::clock();
 
     if (!route.LoadMapAndRoutes(davis_osm, stop_csv, routes_csv)) {
         return EXIT_FAILURE;
     } else
         std::cout << "Finished Load" << std::endl;
 
-    auto load = std::clock();
-    duration = (load - start) / (double) CLOCKS_PER_SEC;
-    std::cout << "Load Time: " << duration << '\n';
-
     //auto find_short = std::clock();
-    double temp = route.FindFastestPath(265024841, 4399280681, path_ID);
+    //double temp = route.FindFastestPath(265024841, 4399280681, path_ID);
+    double temp;
     int hour = int(temp);
     double min = (temp - hour) * 60.0;
     double sec = (min - int(min)) * 60;
 
     std::cout << hour << "hr " << int(min) << "min " << sec << "sec" << std::endl;
 
-    //route.GetShortDescription(path_ID, path_str);
-    //duration = (find_short - load) / (double) CLOCKS_PER_SEC;
-
     for (auto element:path_ID) {
         std::cout << element.first << "  " << element.second << std::endl;
     }
-    std::cout << "Find Short Time: " << duration << '\n';
 
     return EXIT_SUCCESS;
 }

@@ -11,7 +11,6 @@
 #include <XMLEntity.h>
 #include <XMLReader.h>
 #include <CSVReader.h>
-#include <values.h>
 
 //Unit in mph
 #define WALK_SPEED 3.0
@@ -301,7 +300,7 @@ size_t CMapRouter::NodeCount() const {
 
 CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
     auto iter = cheating_LOL.begin();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < index; i++) {
         iter++;
     }
     return iter->first;
@@ -310,7 +309,7 @@ CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
 CMapRouter::TLocation CMapRouter::GetSortedNodeLocationByIndex(size_t index) const {
     //need to add error handling
     auto iter = cheating_LOL.begin();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < index; i++) {
         iter++;
     }
     return iter->second;
@@ -411,13 +410,15 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
 
     //after the matrix is set, retrieve the data backwards and collect the vector
     TNodeID loopback = dest;
+    auto temp = dist_prev_map.find(loopback);
+    double dist = temp->second.second;
     while (loopback != src) {
-        auto temp = dist_prev_map.find(loopback);
         path.insert(path.begin(), temp->first);
         loopback = temp->second.first;
+        temp = dist_prev_map.find(loopback);
     }
     path.insert(path.begin(), src);
-    return 1;
+    return dist;
 }
 
 double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathStep> &path) {
@@ -615,34 +616,43 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
         auto dir2 = davis_map.find(path[i + 1]);
         double angle = CalculateBearing(dir1->second.cood.first, dir1->second.cood.second,
                                         dir2->second.cood.first, dir2->second.cood.second);
-//        angle /= 45;
-//        switch (int(angle)) {
-//
-//            case 0:
-//                print += "NE";
-//                break;
-//            case 1:
-//                print += "NE";
-//
-//                break;
-//            case 2:
-//                print += "NE";
-//                break;
-//            case 3:
-//                print += "NE";
-//                break;
-//            case 4:
-//                print += "NE";
-//                break;
-//            case 5:
-//                print += "NE";
-//                break;
-//            case 6:
-//                print += "NE";
-//                break;
-//            case 7:
-//                print += "NE";
-//                break;
+
+        angle /= 22.5;
+        switch (int(angle)) {
+            case 0:
+            case 15:
+                print << "N";
+                break;
+            case 1:
+            case 2:
+                print << "NE";
+                break;
+            case 3:
+            case 4:
+                print << "E";
+                break;
+            case 5:
+            case 6:
+                print << "SE";
+                break;
+            case 7:
+            case 8:
+                print << "S";
+                break;
+            case 9:
+            case 10:
+                print << "SW";
+                break;
+            case 11:
+            case 12:
+                print << "W";
+                break;
+            case 13:
+            case 14:
+                print << "NW";
+                break;
+        }
+
         degrees = int(dir1->second.cood.first);
         minutes = (dir1->second.cood.first - degrees) * 60;
         seconds = (minutes - int(minutes)) * 60;
@@ -656,7 +666,6 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
         print << std::fixed << std::setprecision(2) << seconds << "\" E";
 
         desc.push_back(print.str());
-
     }
 }
 
