@@ -308,12 +308,15 @@ CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
 }
 
 CMapRouter::TLocation CMapRouter::GetSortedNodeLocationByIndex(size_t index) const {
-    //need to add error handling
     auto iter = cheating_LOL.begin();
-    for (int i = 0; i < index; i++) {
-        iter++;
+    if (index >= davis_map.size()){
+        return std::make_pair(180.0, 360.0);
+    } else {
+        for (int i = 0; i < index; i++) {
+            iter++;
+        }
+        return iter->second;
     }
-    return iter->second;
 }
 
 CMapRouter::TLocation CMapRouter::GetNodeLocationByID(TNodeID nodeid) const {
@@ -329,7 +332,7 @@ CMapRouter::TNodeID CMapRouter::GetNodeIDByStopID(TStopID stopid) const {
     if (iter == stop_to_node_map.end()) {
         return InvalidNodeID;
     } else {
-        return iter->first;
+        return iter->second;
     }
 }
 
@@ -353,6 +356,7 @@ bool CMapRouter::GetRouteStopsByRouteName(const std::string &route, std::vector<
         for (auto elements: bus_line->second) {
             stops.push_back(elements.first);
         }
+        stops.pop_back();
         return true;
     }
 }
