@@ -11,6 +11,7 @@ find_package(EXPAT REQUIRED)
 set(
         SOURCE_FILES
         src/main.cpp
+        #src/speedtest.cpp
         src/MapRouter.cpp
         src/CSVReader.cpp
         src/CSVWriter.cpp

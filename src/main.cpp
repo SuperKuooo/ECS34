@@ -2,7 +2,7 @@
 #include <XMLEntity.h>
 #include <XMLReader.h>
 #include <MapRouter.h>
-#include "StringUtils.h"
+#include <StringUtils.h>
 #include <unordered_map>
 #include <iostream>
 #include <string.h>
@@ -13,7 +13,7 @@
 #include <iomanip>
 
 
-int main(int argc, char *argv[]){
+/*int main(int argc, char *argv[]){
     std::string command;
     std::vector<std::string> split_command;
     bool done = false;
@@ -136,15 +136,22 @@ int main(int argc, char *argv[]){
         }
     }
     return EXIT_SUCCESS;
-}
+}*/
 
-/*
+
+
+
 int main() {
     CMapRouter route;
-    std::ifstream davis_osm("../data/davis.osm");
-    std::ifstream stop_csv("../data/stops.csv");
-    std::ifstream routes_csv("../data/routes.csv");
+    std::ifstream davis_osm("../data/davis_xml.xml");
+    std::ifstream stop_csv("../data/shortstop.csv");
+    std::ifstream routes_csv("../data/short.csv");
+
+//    std::ifstream davis_osm("../data/davis.osm");
+//    std::ifstream stop_csv("../data/stops.csv");
+//    std::ifstream routes_csv("../data/routes.csv");
     std::vector<CMapRouter::TPathStep> path_ID;
+    std::vector<CMapRouter::TNodeID> gpath_ID;
     std::vector<std::string> path_str;
 
     if (!route.LoadMapAndRoutes(davis_osm, stop_csv, routes_csv)) {
@@ -153,17 +160,25 @@ int main() {
         std::cout << "Finished Load" << std::endl;
 
     //auto find_short = std::clock();
-    //double temp = route.FindFastestPath(265024841, 4399280681, path_ID);
     double temp;
+    temp = route.FindFastestPath(1, 6, path_ID);
+
+    //std::cout << temp;
     int hour = int(temp);
     double min = (temp - hour) * 60.0;
     double sec = (min - int(min)) * 60;
 
     std::cout << hour << "hr " << int(min) << "min " << sec << "sec" << std::endl;
 
+    route.GetPathDescription(path_ID, path_str);
+    //route.GetShortDescription(gpath_ID, path_str);
+
     for (auto element:path_ID) {
-        std::cout << element.first << "  " << element.second << std::endl;
+        //std::cout << element.first << "  " << element.second << std::endl;
+    }
+    for (auto element:path_str) {
+        std::cout << element << std::endl;
     }
 
     return EXIT_SUCCESS;
-}*/
+}
