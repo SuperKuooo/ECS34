@@ -42,6 +42,7 @@ class CMapRouter{
         // Can add another map so you don't have to traverse the vector to find the StopID
         std::unordered_map<char, std::vector<std::pair<TStopID, BImplementation>>> complete_maniac;
         std::unordered_map<TStopID, TNodeID> stop_to_node_map;
+        std::unordered_map<TNodeID, TStopID> node_to_stop_map;
         std::unordered_map<TNodeID, SImplementation> davis_map;
     public:
         CMapRouter();

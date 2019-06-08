@@ -13,7 +13,7 @@
 
 int main(int argc, char *argv[]){
     int NumRoutes = 1000;
-    std::string DataPath = "./data";
+    std::string DataPath = "../data";
     std::string ResultsPath = "./results";
     bool Verbose = false;
     
@@ -109,7 +109,7 @@ int main(int argc, char *argv[]){
         std::vector< CMapRouter::TNodeID > &ShortestPath = Verbose ? ShortestPaths[Index] : TempShortestPath;
         std::vector< CMapRouter::TPathStep > &FastestPath = Verbose ? FastestPaths[Index] : TempFastestPath;
         ShortestDistance[Index] = MapRouter.FindShortestPath(SourceID, DestID, ShortestPath);
-        FastestTime[Index] = MapRouter.FindFastestPath(SourceID, DestID, FastestPath);
+        //FastestTime[Index] = MapRouter.FindFastestPath(SourceID, DestID, FastestPath);
     }
     auto ProcessingDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now()-ProcessingStart);
     std::cerr<<"Outputting Results"<<std::endl;    

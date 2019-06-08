@@ -129,9 +129,8 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
                 osm_in.ReadEntity(entity_in, true);
                 continue;
             }
-            TNodeID target_id = std::stol(entity_in.AttributeValue("ref"));
+            TNodeID target_id = std::stoul(entity_in.AttributeValue("ref"));
             auto iter = davis_map.find(target_id);
-
             if (iter == davis_map.end()) {
                 osm_in.ReadEntity(entity_in, true);
                 continue;
@@ -139,6 +138,9 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
                 buffer_vect.emplace_back(iter);
                 osm_in.ReadEntity(entity_in, true);
             }
+        }
+        if (buffer_vect.size() == 1) {
+            continue;
         }
         while (entity_in.DNameData == "tag") {
             if (entity_in.DType != SXMLEntity::EType::StartElement) {
@@ -246,6 +248,7 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
     stop_in.ReadRow(row_vect);
     while (stop_in.ReadRow(row_vect)) {
         stop_to_node_map[std::stoul(row_vect[0])] = std::stoul(row_vect[1]);
+        node_to_stop_map[std::stoul(row_vect[1])] = std::stoul(row_vect[0]);
     }
 
     route_in.ReadRow(row_vect);
@@ -278,9 +281,9 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
             std::vector<TNodeID> path;
             TNodeID id1 = stop_to_node_map.find(iter_mid->first)->second,
                     id2 = stop_to_node_map.find(iter_post->first)->second;
-            if (FindShortestPath(id1, id2, path))
+            if (FindShortestPath(id1, id2, path) < 1000000)
                 iter_mid->second.traverse_right_time = PathToTime(path);
-            if (FindShortestPath(id2, id1, path))
+            if (FindShortestPath(id2, id1, path) < 1000000)
                 iter_post->second.traverse_left_time = PathToTime(path);
             iter_post++;
             if (iter_post == buffer_row.end() or !iter_post->first) {
@@ -308,15 +311,15 @@ CMapRouter::TNodeID CMapRouter::GetSortedNodeIDByIndex(size_t index) const {
 }
 
 CMapRouter::TLocation CMapRouter::GetSortedNodeLocationByIndex(size_t index) const {
-    //need to add error handling
     auto iter = cheating_LOL.begin();
-    if (index > cheating_LOL.size() - 1) {
+    if (index >= davis_map.size()) {
         return std::make_pair(180.0, 360.0);
+    } else {
+        for (size_t i = 0; i < index; i++) {
+            iter++;
+        }
+        return iter->second;
     }
-    for (size_t i = 0; i < index; i++) {
-        iter++;
-    }
-    return iter->second;
 }
 
 CMapRouter::TLocation CMapRouter::GetNodeLocationByID(TNodeID nodeid) const {
@@ -362,6 +365,7 @@ bool CMapRouter::GetRouteStopsByRouteName(const std::string &route, std::vector<
             }
             i++;
         }
+        stops.pop_back();
         return true;
     }
 }
@@ -379,7 +383,9 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
             //std::cout << "Starting Empty for shortest" << std::endl;
             return std::numeric_limits<double>::max();
         }
-    }
+    } else
+        return std::numeric_limits<double>::max();
+
 
     //The matrix that stores previous node and distance from src
     std::unordered_map<TNodeID, std::pair<TNodeID, double>> dist_prev_map;
@@ -421,17 +427,20 @@ double CMapRouter::FindShortestPath(TNodeID src, TNodeID dest, std::vector<TNode
                 top_node_map.insert(std::pair<double, TNodeID>(dist, neighbor.ID));
             }
         }
+
         if (!top_node_map.empty()) {
             while (visited_map.find(top_node_map.begin()->second) != visited_map.end()) {
                 auto it = top_node_map.find(top_node_map.begin()->first);
                 top_node_map.erase(it);
             }
+            if (top_node_map.empty()) {
+                return std::numeric_limits<double>::max();
+            }
         }
+
+
         //traverse the current node
         traverse_node = dist_prev_map.find(top_node_map.begin()->second);
-        if (traverse_node == dist_prev_map.end())
-            return std::numeric_limits<double>::max();
-        //int i = traverse_node->first;
         traverse_iter = davis_map.find(traverse_node->first);
     }
 
@@ -529,7 +538,7 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
             } else if (counter == length - 1) {
                 if (vect[length].second.ID and visited_map.find(vect[0].second.ID) == visited_map.end()) {
                     auto adjacent_iter = dist_prev_map.find(vect[0].second.ID);
-                    double time = vect[0].second.traverse_right_time + traverse_node->second.second;
+                    double time = vect[counter].second.traverse_right_time + traverse_node->second.second;
                     TNodeDist = std::make_pair(std::make_pair(method, traverse_node->first), time);
                     if (adjacent_iter == dist_prev_map.end()) {
                         dist_prev_map.insert(std::make_pair(vect[0].second.ID, TNodeDist));
@@ -610,7 +619,7 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
         //traverse the current node
         traverse_node = dist_prev_map.find(top_node_map.begin()->second);
         if (traverse_node == dist_prev_map.end())
-            return std::numeric_limits<double>::max();
+            return -1;
         traverse_iter = davis_map.find(traverse_node->first);
     }
 
@@ -632,27 +641,62 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
 
 bool
 CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, std::vector<std::string> &desc) const {
+    if (path.empty() or !desc.empty())
+        return false;
+    std::stringstream print;
     int length = path.size() - 1;
+    int degrees;
+    int j = 0;
+    double minutes, seconds;
 
-    for (int i = 0; i <= length; i++) {
-        std::stringstream print;
-        int degrees;
-        int j = i;
-        double minutes, seconds;
+    auto dir1 = davis_map.find(path[0]);
+    auto dir2 = davis_map.find(path[j]);
+    auto temp = dir1->second.cood.first;
 
+    print << "Start at ";
+    if (temp < 0)
+        temp *= -1;
+    degrees = int(temp);
+    minutes = (temp - degrees) * 60;
+    seconds = (minutes - int(minutes)) * 60;
+    print << degrees << "d " << int(minutes) << "' ";
+    if (seconds == 0) {
+        print << std::fixed << std::setprecision(0) << seconds << "\" N, ";
+    } else
+        print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
+
+
+    temp = dir1->second.cood.second;
+
+    if (temp < 0)
+        temp *= -1;
+    degrees = int(temp);
+    minutes = (temp - degrees) * 60;
+    seconds = (minutes - int(minutes)) * 60;
+    print << degrees << "d " << int(minutes) << "' ";
+    if (seconds == 0) {
+        print << std::fixed << std::setprecision(0) << seconds << "\" N, ";
+    } else
+        print << std::fixed << std::setprecision(2) << seconds << "\" E";
+
+    desc.push_back(print.str());
+
+
+    for (int i = 0; i <= length - 1; i++) {
+        print.str("");
+        j = i;
         if (i != length) {
             j++;
         }
-        auto dir1 = davis_map.find(path[i]);
-        auto dir2 = davis_map.find(path[j]);
-
+        dir1 = davis_map.find(path[i]);
+        dir2 = davis_map.find(path[j]);
         double angle = CalculateBearing(dir1->second.cood.first, dir1->second.cood.second,
                                         dir2->second.cood.first, dir2->second.cood.second);
 
-        angle /= 22.5;
         if (angle < 0) {
-            angle *= -1;
+            angle += 360;
         }
+        angle /= 22.5;
         switch (int(angle)) {
             case 0:
             case 15:
@@ -687,97 +731,243 @@ CMapRouter::GetShortDescription(const std::vector<CMapRouter::TNodeID> &path, st
                 print << "Walk NW";
                 break;
             default:
-                std::cout << angle << std::endl;
                 std::cout << "Error Angle" << std::endl;
                 break;
         }
         print << " to ";
-        auto temp = dir1->second.cood.first;
+        temp = dir2->second.cood.first;
         if (temp < 0)
             temp *= -1;
         degrees = int(temp);
         minutes = (temp - degrees) * 60;
         seconds = (minutes - int(minutes)) * 60;
         print << degrees << "d " << int(minutes) << "' ";
-        print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
+        if (seconds == 0) {
+            print << std::fixed << std::setprecision(0) << seconds << "\" N, ";
+        } else
+            print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
 
-        temp = dir1->second.cood.second;
+        temp = dir2->second.cood.second;
         if (temp < 0)
             temp *= -1;
         degrees = int(temp);
         minutes = (temp - degrees) * 60;
         seconds = (minutes - int(minutes)) * 60;
         print << degrees << "d " << int(minutes) << "' ";
-        print << std::fixed << std::setprecision(3) << seconds << "\" E";
+        if (seconds == 0) {
+            print << std::fixed << std::setprecision(0) << seconds << "\" E";
+        } else
+            print << std::fixed << std::setprecision(2) << seconds << "\" E";
 
         desc.push_back(print.str());
     }
+    print.str("");
+    print << "End at ";
+    temp = dir2->second.cood.first;
+    if (temp < 0)
+        temp *= -1;
+    degrees = int(temp);
+    minutes = (temp - degrees) * 60;
+    seconds = (minutes - int(minutes)) * 60;
+    print << degrees << "d " << int(minutes) << "' ";
+    if (seconds == 0) {
+        print << std::fixed << std::setprecision(0) << seconds << "\" N, ";
+    } else
+        print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
+
+    temp = dir2->second.cood.second;
+
+    if (temp < 0)
+        temp *= -1;
+    degrees = int(temp);
+    minutes = (temp - degrees) * 60;
+    seconds = (minutes - int(minutes)) * 60;
+    print << degrees << "d " << int(minutes) << "' ";
+    if (seconds == 0) {
+        print << std::fixed << std::setprecision(0) << seconds << "\" E";
+    } else
+        print << std::fixed << std::setprecision(2) << seconds << "\" E";
+
+    desc.push_back(print.str());
     return true;
 }
 
 
 bool CMapRouter::GetPathDescription(const std::vector<TPathStep> &path, std::vector<std::string> &desc) const {
+    if (path.empty() or !desc.empty())
+        return false;
+    std::stringstream print;
+    int length = path.size() - 1;
+    int degrees;
+    int j = 0;
+    double minutes, seconds;
+    bool bus_flag = false;
+    TStopID bus_stop = 0;
 
-//    int length = path.size() - 2;
+    auto dir1 = davis_map.find(path[0].second);
+    auto dir2 = davis_map.find(path[j].second);
+    auto temp = dir1->second.cood.first;
 
-//    for (int i = 0; i <= length; i++) {
-//        std::stringstream print;
-//        int degrees;
-//        double minutes, seconds;
-//        auto dir1 = davis_map.find(path[i]);
-//        auto dir2 = davis_map.find(path[i + 1]);
-//        double angle = CalculateBearing(dir1->second.cood.first, dir1->second.cood.second,
-//                                        dir2->second.cood.first, dir2->second.cood.second);
-//
-//        angle /= 22.5;
-//        switch (int(angle)) {
-//            case 0:
-//            case 15:
-//                print << "N";
-//                break;
-//            case 1:
-//            case 2:
-//                print << "NE";
-//                break;
-//            case 3:
-//            case 4:
-//                print << "E";
-//                break;
-//            case 5:
-//            case 6:
-//                print << "SE";
-//                break;
-//            case 7:
-//            case 8:
-//                print << "S";
-//                break;
-//            case 9:
-//            case 10:
-//                print << "SW";
-//                break;
-//            case 11:
-//            case 12:
-//                print << "W";
-//                break;
-//            case 13:
-//            case 14:
-//                print << "NW";
-//                break;
-//        }
-//        degrees = int(dir1->second.cood.first);
-//        minutes = (dir1->second.cood.first - degrees) * 60;
-//        seconds = (minutes - int(minutes)) * 60;
-//        print << degrees << "d " << int(minutes) << "' ";
-//        print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
-//
-//        degrees = int(dir1->second.cood.second);
-//        minutes = (dir1->second.cood.second - degrees) * 60;
-//        seconds = (minutes - int(minutes)) * 60;
-//        print << degrees << "d " << int(minutes) << "' ";
-//        print << std::fixed << std::setprecision(2) << seconds << "\" E";
-//
-//        desc.push_back(print.str());
-//    }
+    print << "Start at ";
+    if (temp < 0)
+        temp *= -1;
+    degrees = int(temp);
+    minutes = (temp - degrees) * 60;
+    seconds = (minutes - int(minutes)) * 60;
+    print << degrees << "d " << int(minutes) << "' ";
+    if (seconds == 0) {
+        print << std::fixed << std::setprecision(0) << seconds << "\" N, ";
+    } else
+        print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
+
+    temp = dir1->second.cood.second;
+
+    if (temp < 0)
+        temp *= -1;
+    degrees = int(temp);
+    minutes = (temp - degrees) * 60;
+    seconds = (minutes - int(minutes)) * 60;
+    print << degrees << "d " << int(minutes) << "' ";
+    if (seconds == 0) {
+        print << std::fixed << std::setprecision(0) << seconds << "\" E";
+    } else
+        print << std::fixed << std::setprecision(2) << seconds << "\" E";
+    desc.push_back(print.str());
+
+
+    for (int i = 0; i <= length; i++) {
+        j = i;
+        if (i != length) {
+            j++;
+            dir1 = davis_map.find(path[i].second);
+            dir2 = davis_map.find(path[j].second);
+        } else {
+            dir1 = davis_map.find(path[length - 1].second);
+            dir2 = davis_map.find(path[length].second);
+        }
+        double angle = CalculateBearing(dir1->second.cood.first, dir1->second.cood.second,
+                                        dir2->second.cood.first, dir2->second.cood.second);
+
+        if (path[i].first[0] == 'W' and path[j].first[0] != 'B') {
+            if (bus_flag) {
+                print << " and get off at stop " << node_to_stop_map.find(bus_stop)->second;
+                desc.push_back(print.str());
+                bus_flag = false;
+            }
+            print.str("");
+            print << "Walk ";
+            if (angle < 0) {
+                angle += 360;
+            }
+            angle /= 22.5;
+            switch (int(angle)) {
+                case 0:
+                case 15:
+                    print << "N";
+                    break;
+                case 1:
+                case 2:
+                    print << "NE";
+                    break;
+                case 3:
+                case 4:
+                    print << "E";
+                    break;
+                case 5:
+                case 6:
+                    print << "SE";
+                    break;
+                case 7:
+                case 8:
+                    print << "S";
+                    break;
+                case 9:
+                case 10:
+                    print << "SW";
+                    break;
+                case 11:
+                case 12:
+                    print << "W";
+                    break;
+                case 13:
+                case 14:
+                    print << "NW";
+                    break;
+                default:
+                    std::cout << "Error Angle" << std::endl;
+                    break;
+            }
+            print << " to ";
+            temp = dir2->second.cood.first;
+            if (temp < 0)
+                temp *= -1;
+            degrees = int(temp);
+            minutes = (temp - degrees) * 60;
+            seconds = (minutes - int(minutes)) * 60;
+            print << degrees << "d " << int(minutes) << "' ";
+            if (seconds == 0) {
+                print << std::fixed << std::setprecision(0) << seconds << "\" N, ";
+            } else
+                print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
+
+            temp = dir2->second.cood.second;
+            if (temp < 0)
+                temp *= -1;
+            degrees = int(temp);
+            minutes = (temp - degrees) * 60;
+            seconds = (minutes - int(minutes)) * 60;
+            print << degrees << "d " << int(minutes) << "' ";
+            if (seconds == 0) {
+                print << std::fixed << std::setprecision(0) << seconds << "\" E";
+            } else
+                print << std::fixed << std::setprecision(2) << seconds << "\" E";
+
+            desc.push_back(print.str());
+        } else {
+            if (bus_flag) {
+                bus_stop = path[i].second;
+            } else {
+                print.str("");
+                print << "Take " << path[j].first;
+                bus_stop = path[i].second;
+                bus_flag = true;
+            }
+        }
+    }
+
+    if (bus_flag) {
+        print << " and get off at stop " << node_to_stop_map.find(bus_stop)->second;
+        desc.push_back(print.str());
+        print.str("");
+    }
+
+    print.str("");
+    print << "End at ";
+    temp = dir2->second.cood.first;
+    if (temp < 0)
+        temp *= -1;
+    degrees = int(temp);
+    minutes = (temp - degrees) * 60;
+    seconds = (minutes - int(minutes)) * 60;
+    print << degrees << "d " << int(minutes) << "' ";
+    if (seconds == 0) {
+        print << std::fixed << std::setprecision(0) << seconds << "\" N, ";
+    } else
+        print << std::fixed << std::setprecision(2) << seconds << "\" N, ";
+
+    temp = dir2->second.cood.second;
+
+    if (temp < 0)
+        temp *= -1;
+    degrees = int(temp);
+    minutes = (temp - degrees) * 60;
+    seconds = (minutes - int(minutes)) * 60;
+    print << degrees << "d " << int(minutes) << "' ";
+    if (seconds == 0) {
+        print << std::fixed << std::setprecision(0) << seconds << "\" E";
+    } else
+        print << std::fixed << std::setprecision(2) << seconds << "\" E";
+    desc.push_back(print.str());
     return true;
 }
 

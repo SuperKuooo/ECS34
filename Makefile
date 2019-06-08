@@ -18,7 +18,8 @@ CPPFLAGS        += -std=c++14
 PROJ_NAME       = proj5
 TESTROUTER_NAME = testrouter
 LIBCSV_NAME     = libcsv.a
-MAIN_OBJ        = $(OBJ_DIR)/main.o
+#MAIN_OBJ        = $(OBJ_DIR)/main.o
+MAIN_OBJ        = $(OBJ_DIR)/speedtest.o
 
 TESTROUTER_OBJ = $(OBJ_DIR)/testrouter.o
 
@@ -26,11 +27,8 @@ PROJ_OBJS     = $(OBJ_DIR)/CSVReader.o \
 		$(OBJ_DIR)/CSVWriter.o \
 		$(OBJ_DIR)/XMLReader.o \
 		$(OBJ_DIR)/XMLWriter.o \
-        $(OBJ_DIR)/MapRouter.o
-
-CSV_READER_OBJ  = $(OBJ_DIR)/CSVReader.o
-CSV_WRITER_OBJ  = $(OBJ_DIR)/CSVWriter.o
-MAP_ROUTER_OBJ  = $(OBJ_DIR)/MapRouter.o
+		$(OBJ_DIR)/MapRouter.o \
+        $(OBJ_DIR)/StringUtils.o
 
 all: $(LIB_DIR)/$(LIBCSV_NAME)
 $(LIB_DIR)/$(LIBCSV_NAME): $(LIBCSV_DIR)/libcsv.la
@@ -40,9 +38,11 @@ $(LIBCSV_DIR)/MakeFile:
 	cd $(LIBCSV_DIR); ./configure --prefix=$(CUR_DIR); cd ..
 
 $(LIBCSV_DIR)/libcsv.la: $(LIBCSV_DIR)/MakeFile
-	cd $(LIBCSV_DIR); make; cd ..
+	cd $(LIBCSV_DIR); make;cd ..
 
 all: directories testrouter $(BIN_DIR)/$(PROJ_NAME)
+all: directories $(BIN_DIR)/$(PROJ_NAME)
+
 
 testrouter: $(TESTBIN_DIR)/$(TESTROUTER_NAME)
 	$(TESTBIN_DIR)/$(TESTROUTER_NAME)
