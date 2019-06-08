@@ -40,7 +40,7 @@ $(LIBCSV_DIR)/MakeFile:
 $(LIBCSV_DIR)/libcsv.la: $(LIBCSV_DIR)/MakeFile
 	cd $(LIBCSV_DIR); make;cd ..
 
-all: directories testrouter $(BIN_DIR)/$(PROJ_NAME)
+#all: directories testrouter $(BIN_DIR)/$(PROJ_NAME)
 all: directories $(BIN_DIR)/$(PROJ_NAME)
 
 
