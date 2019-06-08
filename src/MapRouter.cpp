@@ -362,14 +362,8 @@ bool CMapRouter::GetRouteStopsByRouteName(const std::string &route, std::vector<
     if (bus_line == complete_maniac.end()) {
         return false;
     } else {
-        size_t i = 0;
-        size_t length = bus_line->second.size() - 2;
         for (auto elements: bus_line->second) {
             stops.push_back(elements.first);
-            if (i == length) {
-                break;
-            }
-            i++;
         }
         stops.pop_back();
         return true;

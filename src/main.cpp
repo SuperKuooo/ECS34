@@ -18,7 +18,6 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> split_command;
     bool done = false;
     bool shortOrfast = false;
-    bool first = true;
     std::ofstream out;
     CCSVWriter writer(out);
     CMapRouter route;
@@ -29,12 +28,6 @@ int main(int argc, char *argv[]) {
     std::ifstream stop_csv("../data/stops.csv");
     std::ifstream routes_csv("../data/routes.csv");
     route.LoadMapAndRoutes(davis_osm, stop_csv, routes_csv);
-
-//    struct InputError : std::exception {
-//        const char *what() const noexcept {
-//            return "Invalid command, see help.";
-//        }
-//    };
 
     while (!done) {
         std::cout << "> ";
@@ -107,6 +100,7 @@ int main(int argc, char *argv[]) {
                             std::cout << "Fastest path takes " << hour << "hr " << int(min) << "min " << std::fixed
                                       << std::setprecision(1) << sec << "sec" << std::endl;
                         }
+                        route.GetPathDescription(FastestPath, description);
                     }
                 } catch (std::exception &Ex) {
                     std::cout << "Invalid fastest command, see help." << std::endl;
@@ -127,6 +121,7 @@ int main(int argc, char *argv[]) {
                         std::cout << "Shortest path is " << std::fixed << std::setprecision(2) << res << "mi"
                                   << std::endl;
                     }
+                    route.GetShortDescription(ShortestPath, description);
                 } catch (std::exception &Ex) {
                     std::cout << "Invalid shortest command, see help." << std::endl;
                 }
@@ -135,18 +130,13 @@ int main(int argc, char *argv[]) {
             if (description.empty()) {
                 std::cout << "Failed to save path." << std::endl;
             } else {
-                out.open("saved_path.csv");
+                out.open("./saved_path.csv");
                 out << writer.WriteRow(description) << "\n";
                 out.close();
-                std::cout << "File saved" << std::endl;
+                std::cout << "File saved." << std::endl;
             }
 
         } else if (split_command[0] == "print") {
-            if (!description.empty()) {
-                description.clear();
-            }
-            route.GetPathDescription(FastestPath, description);
-            route.GetShortDescription(ShortestPath, description);
             if (description.empty()){
                 std::cout << "No valid path to print." << std::endl;
             } else {
@@ -164,6 +154,8 @@ int main(int argc, char *argv[]) {
         } else {
             std::cout << "Unknown command \"" << command << "\" type help for help." << std::endl;
         }
+        command.clear();
+        split_command.clear();
     }
     return EXIT_SUCCESS;
 }
