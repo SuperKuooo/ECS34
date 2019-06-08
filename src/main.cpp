@@ -1,4 +1,5 @@
 #include <CSVReader.h>
+#include <CSVWriter.h>
 #include <XMLEntity.h>
 #include <XMLReader.h>
 #include <MapRouter.h>
@@ -19,6 +20,8 @@ int main(int argc, char *argv[]){
     bool done = false;
     bool shortOrfast;
     bool NoException = true;
+    std::ofstream out;
+    CCSVWriter writer(out);
     CMapRouter route;
     std::vector<CMapRouter::TNodeID> ShortestPath;
     std::vector<CMapRouter::TPathStep> FastestPath;
@@ -115,10 +118,19 @@ int main(int argc, char *argv[]){
                 std::cout << "Invalid shortest command, see help." << std::endl;
             }
         } else if (split_command[0] == "save"){
-            std::ofstream out("Saved_Path");
-            //"Failed to save path."
+            if (description.empty()){
+                std::cout << "Failed to save path." << std::endl;
+            } else {
+                out.open("saved_path.csv");
+                out << writer.WriteRow(description);
+                out.close();
+                std::cout << "File saved" << std::endl;
+            }
 
         } else if (split_command[0] == "print"){
+            if (!description.empty()){
+                description.clear();
+            }
             if (shortOrfast){
                 route.GetPathDescription(FastestPath, description);
                 for (auto &elem:description){
@@ -130,7 +142,7 @@ int main(int argc, char *argv[]){
                     std::cout << elem << std::endl;
                 }
             }
-            description.clear();
+
         } else {
             std::cout << "Unknown command " << command << " type help for help." << std::endl;
         }
