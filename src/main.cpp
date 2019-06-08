@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
     std::string command;
     std::vector<std::string> split_command;
     bool done = false;
-    bool shortOrfast;
-    bool NoException = true;
+    bool shortOrfast = false;
+    bool first = true;
     std::ofstream out;
     CCSVWriter writer(out);
     CMapRouter route;
@@ -31,11 +31,11 @@ int main(int argc, char *argv[]) {
     std::ifstream routes_csv("../data/routes.csv");
     route.LoadMapAndRoutes(davis_osm, stop_csv, routes_csv);
 
-    struct InputError : std::exception {
-        const char *what() const noexcept {
-            return "Invalid command, see help.";
-        }
-    };
+//    struct InputError : std::exception {
+//        const char *what() const noexcept {
+//            return "Invalid command, see help.";
+//        }
+//    };
 
     while (!done) {
         std::cout << "> ";
@@ -66,67 +66,78 @@ int main(int argc, char *argv[]) {
             size_t count = route.NodeCount();
             std::cout << count << " nodes" << std::endl;
         } else if (split_command[0] == "node") {
-            try {
-                size_t param = std::stoi(split_command[1]);
-                if (param >= 0 and param < route.NodeCount()) {
-                    CMapRouter::TNodeID tempID = route.GetSortedNodeIDByIndex(param);
-                    CMapRouter::TLocation tempLoc = route.GetSortedNodeLocationByIndex(param);
-                    std::string lat = std::to_string(tempLoc.first);
-                    std::string lon = std::to_string(tempLoc.second);
-                    std::cout << "Node " << param << ": id = " << tempID << " is at " << lat << ", " << lon
-                              << std::endl;
-                } else {
+            if (split_command.size() != 2){
+                std::cout << "Invalid node parameter, see help." << std::endl;
+            } else {
+                try {
+                    size_t param = std::stoi(split_command[1]);
+                    if (param >= 0 and param < route.NodeCount()) {
+                        CMapRouter::TNodeID tempID = route.GetSortedNodeIDByIndex(param);
+                        CMapRouter::TLocation tempLoc = route.GetSortedNodeLocationByIndex(param);
+                        std::string lat = std::to_string(tempLoc.first);
+                        std::string lon = std::to_string(tempLoc.second);
+                        std::cout << "Node " << param << ": id = " << tempID << " is at " << std::fixed
+                                  << std::setprecision(3) << lat << ", " << std::fixed << std::setprecision(3) << lon
+                                  << std::endl;
+                    } else {
+                        std::cout << "Invalid node parameter, see help." << std::endl;
+                    }
+                } catch (std::exception &Ex) {
                     std::cout << "Invalid node parameter, see help." << std::endl;
                 }
-            } catch (std::exception &Ex) {
-                NoException = false;
-                std::cout << "Invalid node parameter, see help." << std::endl;
             }
         } else if (split_command[0] == "fastest") {
             shortOrfast = true;
-            try {
-                size_t param1 = std::stoi(split_command[1]);
-                size_t param2 = std::stoi(split_command[2]);
-                double temp = route.FindFastestPath(param1, param2, FastestPath);
-                int hour = int(temp);
-                double min = (temp - hour) * 60.0;
-                double sec = (min - int(min)) * 60.0;
-                if (temp == std::numeric_limits<double>::max()) {
-                    std::cout << "Unable to find fastest path from " << param1 << " to " << param2 << std::endl;
-                } else {
-                    if (hour == 0) {
-                        std::cout << "Fastest path takes " << int(min) << "min " << std::fixed
-                                  << std::setprecision(1) << sec << "sec" << std::endl;
-                    } else {
-                        std::cout << "Fastest path takes " << hour << "hr " << int(min) << "min " << std::fixed
-                                  << std::setprecision(1) << sec << "sec" << std::endl;
-                    }
-                }
-            } catch (std::exception &Ex) {
-                NoException = false;
+            if (split_command.size() != 3){
                 std::cout << "Invalid fastest command, see help." << std::endl;
+            } else {
+                try {
+                    size_t param1 = std::stoi(split_command[1]);
+                    size_t param2 = std::stoi(split_command[2]);
+                    double temp = route.FindFastestPath(param1, param2, FastestPath);
+                    int hour = int(temp);
+                    double min = (temp - hour) * 60.0;
+                    double sec = (min - int(min)) * 60.0;
+                    if (temp == std::numeric_limits<double>::max()) {
+                        std::cout << "Unable to find fastest path from " << param1 << " to " << param2 << std::endl;
+                    } else {
+                        if (hour == 0) {
+                            std::cout << "Fastest path takes " << int(min) << "min " << std::fixed
+                                      << std::setprecision(1) << sec << "sec" << std::endl;
+                        } else {
+                            std::cout << "Fastest path takes " << hour << "hr " << int(min) << "min " << std::fixed
+                                      << std::setprecision(1) << sec << "sec" << std::endl;
+                        }
+                    }
+                } catch (std::exception &Ex) {
+                    std::cout << "Invalid fastest command, see help." << std::endl;
+                }
             }
         } else if (split_command[0] == "shortest") {
             shortOrfast = false;
-            try {
-                size_t param1 = std::stoi(split_command[1]);
-                size_t param2 = std::stoi(split_command[2]);
-                double res = route.FindShortestPath(param1, param2, ShortestPath);
-                if (res == std::numeric_limits<double>::max()) {
-                    std::cout << "Unable to find shortest path from " << param1 << " to " << param2 << std::endl;
-                } else {
-                    std::cout << "Shortest path is " << std::fixed << std::setprecision(2) << res << "mi" << std::endl;
-                }
-            } catch (std::exception &Ex) {
-                NoException = false;
+            if (split_command.size() != 3){
                 std::cout << "Invalid shortest command, see help." << std::endl;
+            } else {
+                try {
+                    size_t param1 = std::stoi(split_command[1]);
+                    size_t param2 = std::stoi(split_command[2]);
+                    double res = route.FindShortestPath(param1, param2, ShortestPath);
+                    if (res == std::numeric_limits<double>::max()) {
+                        std::cout << "Unable to find shortest path from " << param1 << " to " << param2 << std::endl;
+                    } else {
+                        std::cout << "Shortest path is " << std::fixed << std::setprecision(2) << res << "mi"
+                                  << std::endl;
+                    }
+                } catch (std::exception &Ex) {
+                    std::cout << "Invalid shortest command, see help." << std::endl;
+                }
             }
         } else if (split_command[0] == "save") {
             if (description.empty()) {
                 std::cout << "Failed to save path." << std::endl;
             } else {
                 out.open("saved_path.csv");
-                out << writer.WriteRow(description);
+                out << writer.WriteRow(description) << "\n";
                 out.close();
                 std::cout << "File saved" << std::endl;
             }
@@ -135,20 +146,24 @@ int main(int argc, char *argv[]) {
             if (!description.empty()) {
                 description.clear();
             }
-            if (shortOrfast) {
-                route.GetPathDescription(FastestPath, description);
-                for (auto &elem:description) {
-                    std::cout << elem << std::endl;
-                }
+            route.GetPathDescription(FastestPath, description);
+            route.GetShortDescription(ShortestPath, description);
+            if (description.empty()){
+                std::cout << "No valid path to print." << std::endl;
             } else {
-                route.GetShortDescription(ShortestPath, description);
-                for (auto &elem:description) {
-                    std::cout << elem << std::endl;
+                if (shortOrfast) {
+                    for (auto &elem:description) {
+                        std::cout << elem << std::endl;
+                    }
+                } else {
+                    for (auto &elem:description) {
+                        std::cout << elem << std::endl;
+                    }
                 }
             }
 
         } else {
-            std::cout << "Unknown command " << command << " type help for help." << std::endl;
+            std::cout << "Unknown command \"" << command << "\" type help for help." << std::endl;
         }
     }
     return EXIT_SUCCESS;
