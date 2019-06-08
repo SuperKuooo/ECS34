@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> split_command;
     bool done = false;
     bool shortOrfast = false;
-    std::ofstream out;
+    std::ofstream out("/Users/superkuo/Documents/GitHub/ECS34/proj5/routes.csv");
     CCSVWriter writer(out);
     CMapRouter route;
     std::vector<CMapRouter::TNodeID> ShortestPath;
@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
             size_t count = route.NodeCount();
             std::cout << count << " nodes" << std::endl;
         } else if (split_command[0] == "node") {
-            if (split_command.size() != 2){
+            if (split_command.size() != 2) {
                 std::cout << "Invalid node parameter, see help." << std::endl;
             } else {
                 try {
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
             }
         } else if (split_command[0] == "fastest") {
             shortOrfast = true;
-            if (split_command.size() != 3){
+            if (split_command.size() != 3) {
                 std::cout << "Invalid fastest command, see help." << std::endl;
             } else {
                 try {
@@ -108,7 +108,7 @@ int main(int argc, char *argv[]) {
             }
         } else if (split_command[0] == "shortest") {
             shortOrfast = false;
-            if (split_command.size() != 3){
+            if (split_command.size() != 3) {
                 std::cout << "Invalid shortest command, see help." << std::endl;
             } else {
                 try {
@@ -127,17 +127,20 @@ int main(int argc, char *argv[]) {
                 }
             }
         } else if (split_command[0] == "save") {
-            if (description.empty()) {
+            if (!out.is_open() or description.empty()) {
                 std::cout << "Failed to save path." << std::endl;
             } else {
-                out.open("./saved_path.csv");
-                out << writer.WriteRow(description) << "\n";
+                for (auto const & element:description) {
+                    std::vector<std::string> temp;
+                    temp.push_back(element);
+                    writer.WriteRow(temp);
+                }
                 out.close();
                 std::cout << "File saved." << std::endl;
             }
 
         } else if (split_command[0] == "print") {
-            if (description.empty()){
+            if (description.empty()) {
                 std::cout << "No valid path to print." << std::endl;
             } else {
                 if (shortOrfast) {
