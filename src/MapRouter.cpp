@@ -36,7 +36,6 @@ double CMapRouter::PathToTime(std::vector<TNodeID> &path) {
             break;
         }
     }
-    path.clear();
     if (tot_time > 0)
         return tot_time + BUS_WAIT_TIME;
     else
@@ -261,7 +260,7 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
             auto iter = stop_to_node_map.find(std::stoul(row_vect[1]));
             BImplementation temp;
             temp.ID = iter->second;
-            temp.traverse_left_time = -1;
+            //temp.traverse_left_time = -1;
             temp.traverse_right_time = -1;
             davis_map.find(iter->second)->second.busline.emplace_back(std::make_pair(line, std::stoul(row_vect[1])));
             buffer_row.emplace_back(std::make_pair(std::stoul(row_vect[1]), temp));
@@ -281,10 +280,17 @@ bool CMapRouter::LoadMapAndRoutes(std::istream &osm, std::istream &stops, std::i
             std::vector<TNodeID> path;
             TNodeID id1 = stop_to_node_map.find(iter_mid->first)->second,
                     id2 = stop_to_node_map.find(iter_post->first)->second;
-            if (FindShortestPath(id1, id2, path) <= 10000000)
+            if (FindShortestPath(id1, id2, path) < 1000000) {
                 iter_mid->second.traverse_right_time = PathToTime(path);
-            if (FindShortestPath(id2, id1, path) <= 10000000)
-                iter_post->second.traverse_left_time = PathToTime(path);
+                if (path.size() > 2) {
+                    path.erase(path.begin());
+                    path.pop_back();
+                    iter_mid->second.path_to_right = path;
+                }
+                path.clear();
+            }
+//            if (FindShortestPath(id2, id1, path) < 1000000)
+//                iter_post->second.traverse_left_time = PathToTime(path);
             iter_post++;
             if (iter_post == buffer_row.end() or !iter_post->first) {
                 break;
@@ -356,8 +362,14 @@ bool CMapRouter::GetRouteStopsByRouteName(const std::string &route, std::vector<
     if (bus_line == complete_maniac.end()) {
         return false;
     } else {
+        size_t i = 0;
+        size_t length = bus_line->second.size() - 2;
         for (auto elements: bus_line->second) {
             stops.push_back(elements.first);
+            if (i == length) {
+                break;
+            }
+            i++;
         }
         stops.pop_back();
         return true;
@@ -613,7 +625,7 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
         //traverse the current node
         traverse_node = dist_prev_map.find(top_node_map.begin()->second);
         if (traverse_node == dist_prev_map.end())
-            return -1;
+            return std::numeric_limits<double>::max();
         traverse_iter = davis_map.find(traverse_node->first);
     }
 
@@ -624,6 +636,29 @@ double CMapRouter::FindFastestPath(TNodeID src, TNodeID dest, std::vector<TPathS
     //std::unordered_map<TNodeID, std::pair<TPathStep, double>> dist_prev_map;
     while (loopback != src) {
         TPathStep dumb = std::pair<std::string, TNodeID>(temp->second.first.first, loopback);
+        auto cjnitta = temp->second.first.first;
+
+        if (cjnitta.size() > 4) {
+            char line = cjnitta[4];
+            auto garbo = complete_maniac.find(line);
+            auto id = node_to_stop_map.find(loopback);
+
+            auto nicktoothman = garbo->second;
+            for (auto element: garbo->second) {
+                if (element.first == id->second) {
+                    if (!element.second.path_to_right.empty()) {
+                        std::string method = "Bus ";
+                        method += line;
+                        while (!element.second.path_to_right.empty()) {
+                            auto bumd = std::pair<std::string, TNodeID>(method, element.second.path_to_right.back());
+                            path.insert(path.begin(), bumd);
+                            element.second.path_to_right.pop_back();
+                        }
+                    }
+                }
+            }
+        }
+
         path.insert(path.begin(), dumb);
         loopback = temp->second.first.second;
         temp = dist_prev_map.find(loopback);
